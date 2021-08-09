@@ -32,7 +32,7 @@ inputs:
   wait_timeout_seconds:
     required: false
     default: 120
-    description: Number of seconds to wait for the check before timing out (ignored if wait_for_check is false)
+    description: Number of seconds to wait for the check before timing out (ignored if wait_for_check is false). Inlcudes setup time to pull actions, etc
 
   client_payload:
     description: JSON string to provide as client payload on the repository dispatch event

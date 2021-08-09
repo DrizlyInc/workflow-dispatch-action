@@ -53,6 +53,7 @@ func main() {
 
 	githubactions.Infof("Created Check %v\n", *checkRun.ID)
 
+	// Sets amount of time that we should wait for the GitHub API call to complete
 	apiTimeoutCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -76,7 +77,7 @@ func main() {
 	}
 
 	if inputs.waitForCheck {
-		// Wait for any checks listed in wait_for_checks input
+		// Wait for the check to be completed after all actions have passed
 		checkTimeoutCtx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(inputs.waitTimeoutSeconds))
 		// cancel context just in case it sticks around
 		defer cancel()
