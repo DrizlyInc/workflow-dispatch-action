@@ -17,14 +17,14 @@ import (
 )
 
 type inputs struct {
-	appID        int64
-	privateKey   *rsa.PrivateKey
-	targetRepository string
-	targetOwner string
-	eventType     string
-	waitForCheck bool
+	appID              int64
+	privateKey         *rsa.PrivateKey
+	targetRepository   string
+	targetOwner        string
+	eventType          string
+	waitForCheck       bool
 	waitTimeoutSeconds int64
-	clientPaylod map[string]interface{}
+	clientPaylod       map[string]interface{}
 }
 
 func getInputs() (inputs, error) {
@@ -93,14 +93,14 @@ func getInputs() (inputs, error) {
 	}
 
 	return inputs{
-		appID:        appID,
-		privateKey:   privateKey,
-		eventType:     eventType,
-		targetRepository: targetRepository,
-		targetOwner: targetOwner,
-		waitForCheck: waitForCheck,
+		appID:              appID,
+		privateKey:         privateKey,
+		eventType:          eventType,
+		targetRepository:   targetRepository,
+		targetOwner:        targetOwner,
+		waitForCheck:       waitForCheck,
 		waitTimeoutSeconds: waitTimeoutSeconds,
-		clientPaylod: clientPayload,
+		clientPaylod:       clientPayload,
 	}, nil
 }
 
