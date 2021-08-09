@@ -1,0 +1,43 @@
+name: Repository Dispatch
+description: Uses repository dispatch to trigger a workflow in another repository
+author: DrizlyInc/DVX
+
+inputs:
+
+  app_id:
+    required: true
+    description: App ID for a GitHub app with write permissions to the dispatching repository and target repository (for triggering workflows and writing creating checks)
+
+  private_key:
+    required: true
+    description: Private key for the GitHub app id provided
+
+  target_repository:
+    required: true
+    description: Name of the repository to target with the dispatch
+
+  target_owner:
+    required: true
+    description: Owner of the target repository (user or organization)
+
+  event_type:
+    required: true
+    description: Name of the repository dispatch event type
+
+  wait_for_check:
+    required: false
+    default: false
+    description: "Should the action wait for its check to finish? true | false"
+
+  wait_timeout_seconds:
+    required: false
+    default: 120
+    description: Number of seconds to wait for the check before timing out (ignored if wait_for_check is false)
+
+  client_payload:
+    description: JSON string to provide as client payload on the repository dispatch event
+    default: '{}'
+
+runs:
+  using: docker
+  image: Dockerfile
