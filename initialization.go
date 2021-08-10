@@ -24,7 +24,7 @@ type inputs struct {
 	eventType          string
 	waitForCheck       bool
 	waitTimeoutSeconds int64
-	clientPaylod       map[string]interface{}
+	clientPayload       map[string]interface{}
 }
 
 func getInputs() (inputs, error) {
@@ -100,7 +100,7 @@ func getInputs() (inputs, error) {
 		targetOwner:        targetOwner,
 		waitForCheck:       waitForCheck,
 		waitTimeoutSeconds: waitTimeoutSeconds,
-		clientPaylod:       clientPayload,
+		clientPayload:       clientPayload,
 	}, nil
 }
 
