@@ -60,7 +60,7 @@ func main() {
 	// Fill out additional fields of the payload
 	inputs.clientPayload["github_repository"] = fmt.Sprintf("%v/%v", owner, repo)
 	inputs.clientPayload["github_sha"] = os.Getenv("GITHUB_SHA")
-	inputs.clientPayload["check_id"] = *checkRun.ID
+	inputs.clientPayload["check_id"] = fmt.Sprint(*checkRun.ID)
 	rawPayload := json.RawMessage{}
 	rawPayload, err = json.Marshal(inputs.clientPayload)
 	if err != nil {
