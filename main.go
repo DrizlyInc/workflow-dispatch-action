@@ -49,7 +49,7 @@ func main() {
 	if checkRun.ID == nil {
 		githubactions.Fatalf("CreateCheckRun did not actually create a check. Exiting.")
 	}
-	defer githubactions.Infof("View created check here: %s", *checkRun.URL)
+	defer githubactions.Infof("View created check here: %s", *checkRun.HTMLURL)
 
 	githubactions.Infof("Created Check %v\n", *checkRun.ID)
 
