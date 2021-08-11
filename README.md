@@ -19,7 +19,7 @@ This action does three things:
     private_key: ${{ secrets.MY_APP_PRIVATE_KEY }}
 
     #  Name and owner of the repository to target with the dispatch (owner/repo-name)
-    target_repository: example-repository
+    target_repository: example-username/example-repository
 
     # Ref which should be triggered on the target repository
     target_ref: main
