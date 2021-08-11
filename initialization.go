@@ -70,7 +70,7 @@ func getInputs() (inputs, error) {
 		return inputs{}, errors.New("input 'target_ref' not set")
 	}
 
-	workflowFilename, ok := os.LookupEnv("WORKFLOW_FILENAME")
+	workflowFilename, ok := os.LookupEnv("INPUT_WORKFLOW_FILENAME")
 	if !ok {
 		return inputs{}, errors.New("input 'workflow_filename' not set")
 	}
