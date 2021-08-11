@@ -90,11 +90,11 @@ func getInputs() (inputs, error) {
 	workflowInputs := map[string]interface{}{}
 	workflowInputsString, ok := os.LookupEnv("INPUT_WORKFLOW_INPUTS")
 	if !ok {
-		return inputs{}, errors.New("input 'client_payload' not set")
+		return inputs{}, errors.New("input 'workflow_inputs' not set")
 	}
 	err = json.Unmarshal([]byte(workflowInputsString), &workflowInputs)
 	if err != nil {
-		return inputs{}, fmt.Errorf("input 'workflowInputs' is not json: %w", err)
+		return inputs{}, fmt.Errorf("input 'workflow_inputs' is not json: %w", err)
 	}
 
 	return inputs{
