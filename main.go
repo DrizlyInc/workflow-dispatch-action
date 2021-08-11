@@ -129,7 +129,7 @@ func scrapeOutputs(client *github.Client, githubVars githubVars, checkId int64) 
 	}
 
 	checkReportText := check.GetOutput().Text
+	parsedOutputs := parseOutputs(checkReportText)
 
-	githubactions.Infof(*checkReportText)
-
+	githubactions.SetOutput("output", parsedOutputs)
 }
