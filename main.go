@@ -16,6 +16,7 @@ func main() {
 	checkRun := createCheck(client, githubVars, inputs)
 	dispatchWorkflow(client, githubVars, inputs, checkRun)
 	waitForCheck(client, githubVars, inputs, checkRun)
+	scrapeOutputs(client, githubVars, int64(*checkRun.ID))
 }
 
 func initialize() (githubVars, inputs, *github.Client) {
@@ -52,7 +53,7 @@ func createCheck(client *github.Client, githubVars githubVars, inputs inputs) *g
 			Time: time.Now(),
 		},
 		Output: &github.CheckRunOutput{
-			Title: github.String(inputs.workflowFilename),
+			Title:   github.String(inputs.workflowFilename),
 			Summary: github.String("This report will be populated by the triggered workflow"),
 		},
 	})
@@ -114,5 +115,21 @@ func waitForCheck(client *github.Client, githubVars githubVars, inputs inputs, c
 	} else {
 		githubactions.Infof("Check failed!\n")
 	}
+
+}
+
+func scrapeOutputs(client *github.Client, githubVars githubVars, checkId int64) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	check, _, err := client.Checks.GetCheckRun(ctx, githubVars.repositoryOwner, githubVars.repositoryName, checkId)
+	if err != nil {
+		githubactions.Fatalf("Error fetching check for output scraping: %v", err.Error())
+	}
+
+	checkReportText := check.GetOutput().Text
+
+	githubactions.Infof(*checkReportText)
 
 }
