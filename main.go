@@ -53,6 +53,7 @@ func createCheck(client *github.Client, githubVars githubVars, inputs inputs) *g
 		},
 		Output: &github.CheckRunOutput{
 			Title: github.String(inputs.workflowFilename),
+			Summary: github.String("This report will be populated by the triggered workflow"),
 		},
 	})
 
