@@ -14,11 +14,7 @@ inputs:
 
   target_repository:
     required: true
-    description: Name of the repository to target with the dispatch
-
-  target_owner:
-    required: true
-    description: Owner of the target repository (user or organization)
+    description: Name and owner of the repository to target with the dispatch (owner/repo-name)
 
   target_ref:
     required: false

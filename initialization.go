@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v37/github"
@@ -59,11 +60,12 @@ func getInputs() (inputs, error) {
 	if !ok {
 		return inputs{}, errors.New("input 'target_repository' not set")
 	}
-
-	targetOwner, ok := os.LookupEnv("INPUT_TARGET_OWNER")
-	if !ok {
-		return inputs{}, errors.New("input 'target_owner' not set")
+	targetOwnerRepo := strings.Split(targetRepository, "/")
+	if len(targetOwnerRepo) != 2 {
+		return inputs{}, errors.New("input 'target_repository' not formatted as owner/repo-name")
 	}
+	targetOwner := targetOwnerRepo[0]
+	targetRepository = targetOwnerRepo[1]
 
 	targetRef, ok := os.LookupEnv("INPUT_TARGET_REF")
 	if !ok {
