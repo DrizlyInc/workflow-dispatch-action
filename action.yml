@@ -27,7 +27,7 @@ inputs:
 
   workflow_filename:
     required: true
-    description: Name of the workflow file to trigger in the target repository (without .yml extension)
+    description: The basename (no .yml extension) of the file in .github/workflows/ of the target_repository responding to the workflow_dispatch event
 
   wait_for_check:
     required: false

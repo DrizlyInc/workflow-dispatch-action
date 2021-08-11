@@ -36,7 +36,7 @@ func getInputs() (inputs, error) {
 	}
 	appID, err := strconv.ParseInt(appIDString, 10, 64)
 	if err != nil {
-		return inputs{}, errors.New("input app_id must be an integer")
+		return inputs{}, errors.New("input 'app_id' must be an integer")
 	}
 
 	privateKeyString, ok := os.LookupEnv("INPUT_PRIVATE_KEY")
@@ -56,17 +56,17 @@ func getInputs() (inputs, error) {
 	}
 
 	targetRepository, ok := os.LookupEnv("INPUT_TARGET_REPOSITORY")
-	if err != nil {
+	if !ok {
 		return inputs{}, errors.New("input 'target_repository' not set")
 	}
 
 	targetOwner, ok := os.LookupEnv("INPUT_TARGET_OWNER")
-	if err != nil {
+	if !ok {
 		return inputs{}, errors.New("input 'target_owner' not set")
 	}
 
 	targetRef, ok := os.LookupEnv("INPUT_TARGET_REF")
-	if err != nil {
+	if !ok {
 		return inputs{}, errors.New("input 'target_ref' not set")
 	}
 
@@ -82,9 +82,12 @@ func getInputs() (inputs, error) {
 	}
 
 	waitTimeoutSecondsString, ok := os.LookupEnv("INPUT_WAIT_TIMEOUT_SECONDS")
+	if !ok {
+		return inputs{}, errors.New("input 'wait_timeout_seconds' not set")
+	}
 	waitTimeoutSeconds, err := strconv.ParseInt(waitTimeoutSecondsString, 10, 64)
 	if err != nil {
-		return inputs{}, errors.New("input wait_timeout_seconds must be an integer")
+		return inputs{}, errors.New("input 'wait_timeout_seconds' must be an integer")
 	}
 
 	workflowInputs := map[string]interface{}{}
