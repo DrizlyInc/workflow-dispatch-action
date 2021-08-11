@@ -8,7 +8,7 @@ This action does three things:
 # Usage
 
 ```yaml
-- uses: DrizlyInc/workflow-dispatch-action@main
+- uses: DrizlyInc/workflow-dispatch-action@v0.1.0
   with:
 
     # App ID for a GitHub app with write permissions to the dispatching repository
