@@ -1,5 +1,5 @@
-name: Repository Dispatch
-description: Uses repository dispatch to trigger a workflow in another repository
+name: Workflow Dispatch
+description: Uses workflow dispatch to trigger a workflow in another repository
 author: DrizlyInc/DVX
 
 inputs:
@@ -14,15 +14,16 @@ inputs:
 
   target_repository:
     required: true
-    description: Name of the repository to target with the dispatch
+    description: Name and owner of the repository to target with the dispatch (owner/repo-name)
 
-  target_owner:
-    required: true
-    description: Owner of the target repository (user or organization)
+  target_ref:
+    required: false
+    description: Ref which should be triggered on the target repository
+    default: main
 
-  event_type:
+  workflow_filename:
     required: true
-    description: Name of the repository dispatch event type
+    description: The basename (no .yml extension) of the file in .github/workflows/ of the target_repository responding to the workflow_dispatch event
 
   wait_for_check:
     required: false
@@ -34,9 +35,9 @@ inputs:
     default: 120
     description: Number of seconds to wait for the check before timing out (ignored if wait_for_check is false). Inlcudes setup time to pull actions, etc
 
-  client_payload:
-    description: JSON string to provide as client payload on the repository dispatch event
-    default: '{}'
+  workflow_inputs:
+    required: true
+    description: Inputs to pass to the workflow, must be a JSON encoded string ex. '{ "myinput":"myvalue" }'
 
 runs:
   using: docker

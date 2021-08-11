@@ -1,14 +1,14 @@
-# Repository Dispatch Action
+# Workflow Dispatch Action
 
 This action does three things:
 1. Creates a `queued` GitHub check on the repository invoking this action
-2. Triggers a [`repository_dispatch` event](https://docs.github.com/en/actions/reference/events-that-trigger-workflows#repository_dispatch) in another (target) repository
+2. Triggers a [`workflow_dispatch` event](https://docs.github.com/en/actions/reference/events-that-trigger-workflows#workflow_dispatch) in another (target) repository
 3. Optionally waits for the check to updated to a completed status by a workflow in the target repository
 
 # Usage
 
 ```yaml
-- uses: DrizlyInc/repository-dispatch-action@main
+- uses: DrizlyInc/workflow-dispatch-action@v0.1.0
   with:
 
     # App ID for a GitHub app with write permissions to the dispatching repository
@@ -19,14 +19,16 @@ This action does three things:
     private_key: ${{ secrets.MY_APP_PRIVATE_KEY }}
 
     # Name of the repository to target with the dispatch
-    target_repository: REPO_CHANGE_ME
+    target_repository: example-repository
 
     # Owner of the target repository (user or organization)
-    target_owner: OWNER_CHANGE_ME
+    target_owner: example-github-username
 
-    # Name of the repository dispatch event type
-    # this is defined in the workflow file
-    event_type: EVENT_TYPE
+    # Ref which should be triggered on the target repository
+    target_ref: main
+
+    # Name of the workflow file to trigger in the target repository (without .yml extension)
+    workflow_filename: my-workflow
 
     # If true, this action will wait until the check it creates is updated
     # to a completed status before exiting
@@ -36,16 +38,15 @@ This action does three things:
     # Inlcudes setup time to pull actions, etc
     wait_timeout_seconds: 60
 
-    # JSON string to provide as client payload on the repository dispatch event.
-    # Three additional fields are automatically added to the client_payload json object
-    # prior to dispatching:
+    # Inputs to pass to the workflow, must be a JSON encoded string ex. '{ "myinput":"myvalue" }'
+    # Three additional fields are automatically added to the inputs prior to dispatching:
     #    check_id: The ID of the queued GitHub check created by this action
-    #    GITHUB_REPOSITORY: The repository invoking this action, formatted as "<owner>/<repository-name>"
-    #    GITHUB_SHA: The GITHUB_SHA in the workflow invoking this action
-    client_payload: |
+    #    github_repository: The repository invoking this action, formatted as "<owner>/<repository-name>"
+    #    github_sha: The GITHUB_SHA in the workflow invoking this action
+    workflow_inputs: |
       {
         "variable": "foo_bar",
-        "my_cool_num": 2
+        "my_cool_num": "2"
       }
 
 ```

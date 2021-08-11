@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v37/github"
@@ -21,14 +22,14 @@ type inputs struct {
 	privateKey         *rsa.PrivateKey
 	targetRepository   string
 	targetOwner        string
-	eventType          string
+	targetRef          string
+	workflowFilename   string
 	waitForCheck       bool
 	waitTimeoutSeconds int64
-	clientPaylod       map[string]interface{}
+	workflowInputs     map[string]interface{}
 }
 
 func getInputs() (inputs, error) {
-	// appID := githubactions.GetInput("app_id")
 
 	appIDString, ok := os.LookupEnv("INPUT_APP_ID")
 	if !ok {
@@ -36,7 +37,7 @@ func getInputs() (inputs, error) {
 	}
 	appID, err := strconv.ParseInt(appIDString, 10, 64)
 	if err != nil {
-		return inputs{}, errors.New("input app_id must be an integer")
+		return inputs{}, errors.New("input 'app_id' must be an integer")
 	}
 
 	privateKeyString, ok := os.LookupEnv("INPUT_PRIVATE_KEY")
@@ -56,18 +57,24 @@ func getInputs() (inputs, error) {
 	}
 
 	targetRepository, ok := os.LookupEnv("INPUT_TARGET_REPOSITORY")
-	if err != nil {
+	if !ok {
 		return inputs{}, errors.New("input 'target_repository' not set")
 	}
+	targetOwnerRepo := strings.Split(targetRepository, "/")
+	if len(targetOwnerRepo) != 2 {
+		return inputs{}, errors.New("input 'target_repository' not formatted as owner/repo-name")
+	}
+	targetOwner := targetOwnerRepo[0]
+	targetRepository = targetOwnerRepo[1]
 
-	targetOwner, ok := os.LookupEnv("INPUT_TARGET_OWNER")
-	if err != nil {
-		return inputs{}, errors.New("input 'target_owner' not set")
+	targetRef, ok := os.LookupEnv("INPUT_TARGET_REF")
+	if !ok {
+		return inputs{}, errors.New("input 'target_ref' not set")
 	}
 
-	eventType, ok := os.LookupEnv("INPUT_EVENT_TYPE")
+	workflowFilename, ok := os.LookupEnv("INPUT_WORKFLOW_FILENAME")
 	if !ok {
-		return inputs{}, errors.New("input 'event_type' not set")
+		return inputs{}, errors.New("input 'workflow_filename' not set")
 	}
 
 	wfcString := os.Getenv("INPUT_WAIT_FOR_CHECK")
@@ -77,30 +84,34 @@ func getInputs() (inputs, error) {
 	}
 
 	waitTimeoutSecondsString, ok := os.LookupEnv("INPUT_WAIT_TIMEOUT_SECONDS")
+	if !ok {
+		return inputs{}, errors.New("input 'wait_timeout_seconds' not set")
+	}
 	waitTimeoutSeconds, err := strconv.ParseInt(waitTimeoutSecondsString, 10, 64)
 	if err != nil {
-		return inputs{}, errors.New("input wait_timeout_seconds must be an integer")
+		return inputs{}, errors.New("input 'wait_timeout_seconds' must be an integer")
 	}
 
-	clientPayload := map[string]interface{}{}
-	clientPayloadString, ok := os.LookupEnv("INPUT_CLIENT_PAYLOAD")
+	workflowInputs := map[string]interface{}{}
+	workflowInputsString, ok := os.LookupEnv("INPUT_WORKFLOW_INPUTS")
 	if !ok {
-		return inputs{}, errors.New("input 'client_payload' not set")
+		return inputs{}, errors.New("input 'workflow_inputs' not set")
 	}
-	err = json.Unmarshal([]byte(clientPayloadString), &clientPayload)
+	err = json.Unmarshal([]byte(workflowInputsString), &workflowInputs)
 	if err != nil {
-		return inputs{}, fmt.Errorf("input 'clientPayload' is not json: %w", err)
+		return inputs{}, fmt.Errorf("input 'workflow_inputs' is not json: %w", err)
 	}
 
 	return inputs{
 		appID:              appID,
 		privateKey:         privateKey,
-		eventType:          eventType,
+		workflowFilename:   workflowFilename,
 		targetRepository:   targetRepository,
 		targetOwner:        targetOwner,
+		targetRef:          targetRef,
 		waitForCheck:       waitForCheck,
 		waitTimeoutSeconds: waitTimeoutSeconds,
-		clientPaylod:       clientPayload,
+		workflowInputs:     workflowInputs,
 	}, nil
 }
 

@@ -32,7 +32,7 @@ func main() {
 
 	// Create Check for the run we will trigger
 	checkRun, _, err := client.Checks.CreateCheckRun(context.Background(), owner, repo, github.CreateCheckRunOptions{
-		Name:    inputs.eventType,
+		Name:    inputs.workflowFilename,
 		HeadSHA: os.Getenv("GITHUB_SHA"),
 		Status:  github.String("queued"),
 		StartedAt: &github.Timestamp{
@@ -58,20 +58,22 @@ func main() {
 	defer cancel()
 
 	// Fill out additional fields of the payload
-	inputs.clientPaylod["GITHUB_REPOSITORY"] = fmt.Sprintf("%v/%v", owner, repo)
-	inputs.clientPaylod["GITHUB_SHA"] = os.Getenv("GITHUB_SHA")
-	inputs.clientPaylod["check_id"] = *checkRun.ID
+	inputs.workflowInputs["github_repository"] = fmt.Sprintf("%v/%v", owner, repo)
+	inputs.workflowInputs["github_sha"] = os.Getenv("GITHUB_SHA")
+	inputs.workflowInputs["check_id"] = fmt.Sprint(*checkRun.ID)
+
 	rawPayload := json.RawMessage{}
-	rawPayload, err = json.Marshal(inputs.clientPaylod)
+	rawPayload, err = json.Marshal(inputs.workflowInputs)
 	if err != nil {
 		githubactions.Fatalf("Error unmarshaling client payload: %v", err.Error())
 	}
-	githubactions.Infof("full client payload: %v\n", string(rawPayload))
+	githubactions.Infof("Complete workflow inputs: %v\n", string(rawPayload))
 
-	_, _, err = client.Repositories.Dispatch(apiTimeoutCtx, inputs.targetOwner, inputs.targetRepository, github.DispatchRequestOptions{
-		EventType:     inputs.eventType,
-		ClientPayload: &rawPayload,
+	_, err = client.Actions.CreateWorkflowDispatchEventByFileName(apiTimeoutCtx, inputs.targetOwner, inputs.targetRepository, fmt.Sprintf("%s.yml", inputs.workflowFilename), github.CreateWorkflowDispatchEventRequest{
+		Ref:    inputs.targetRef,
+		Inputs: inputs.workflowInputs,
 	})
+
 	if err != nil {
 		githubactions.Fatalf("Error disptaching event: %v", err.Error())
 	}
