@@ -40,7 +40,7 @@ func initialize() (githubVars, inputs, *github.Client) {
 func createCheck(client *github.Client, githubVars githubVars, inputs inputs) *github.CheckRun {
 	detailsUrl := fmt.Sprintf("%s/%s/%s/actions", githubVars.serverUrl, inputs.targetOwner, inputs.targetRepository)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
 	checkRun, _, err := client.Checks.CreateCheckRun(ctx, githubVars.repositoryOwner, githubVars.repositoryName, github.CreateCheckRunOptions{
@@ -82,7 +82,7 @@ func dispatchWorkflow(client *github.Client, githubVars githubVars, inputs input
 	}
 	githubactions.Infof("Complete workflow inputs: %v\n", string(rawInputs))
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
 	_, err = client.Actions.CreateWorkflowDispatchEventByFileName(ctx, inputs.targetOwner, inputs.targetRepository, fmt.Sprintf("%s.yml", inputs.workflowFilename), github.CreateWorkflowDispatchEventRequest{

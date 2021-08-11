@@ -17,7 +17,7 @@ func pollForCheckCompletion(ctx context.Context, client *github.Client, githubVa
 
 		githubactions.Infof("    Fetching check status ... ")
 
-		apiTimeoutCtx, cancel := context.WithTimeout(ctx, time.Second*3)
+		apiTimeoutCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 		defer cancel()
 
 		check, _, err := client.Checks.GetCheckRun(apiTimeoutCtx, githubVars.repositoryOwner, githubVars.repositoryName, int64(checkId))
