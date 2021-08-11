@@ -21,14 +21,14 @@ type inputs struct {
 	privateKey         *rsa.PrivateKey
 	targetRepository   string
 	targetOwner        string
-	eventType          string
+	targetRef          string
+	workflowFilename   string
 	waitForCheck       bool
 	waitTimeoutSeconds int64
-	clientPayload       map[string]interface{}
+	workflowInputs     map[string]interface{}
 }
 
 func getInputs() (inputs, error) {
-	// appID := githubactions.GetInput("app_id")
 
 	appIDString, ok := os.LookupEnv("INPUT_APP_ID")
 	if !ok {
@@ -65,9 +65,14 @@ func getInputs() (inputs, error) {
 		return inputs{}, errors.New("input 'target_owner' not set")
 	}
 
-	eventType, ok := os.LookupEnv("INPUT_EVENT_TYPE")
+	targetRef, ok := os.LookupEnv("INPUT_TARGET_REF")
+	if err != nil {
+		return inputs{}, errors.New("input 'target_ref' not set")
+	}
+
+	workflowFilename, ok := os.LookupEnv("WORKFLOW_FILENAME")
 	if !ok {
-		return inputs{}, errors.New("input 'event_type' not set")
+		return inputs{}, errors.New("input 'workflow_filename' not set")
 	}
 
 	wfcString := os.Getenv("INPUT_WAIT_FOR_CHECK")
@@ -82,25 +87,26 @@ func getInputs() (inputs, error) {
 		return inputs{}, errors.New("input wait_timeout_seconds must be an integer")
 	}
 
-	clientPayload := map[string]interface{}{}
-	clientPayloadString, ok := os.LookupEnv("INPUT_CLIENT_PAYLOAD")
+	workflowInputs := map[string]interface{}{}
+	workflowInputsString, ok := os.LookupEnv("INPUT_WORKFLOW_INPUTS")
 	if !ok {
 		return inputs{}, errors.New("input 'client_payload' not set")
 	}
-	err = json.Unmarshal([]byte(clientPayloadString), &clientPayload)
+	err = json.Unmarshal([]byte(workflowInputsString), &workflowInputs)
 	if err != nil {
-		return inputs{}, fmt.Errorf("input 'clientPayload' is not json: %w", err)
+		return inputs{}, fmt.Errorf("input 'workflowInputs' is not json: %w", err)
 	}
 
 	return inputs{
 		appID:              appID,
 		privateKey:         privateKey,
-		eventType:          eventType,
+		workflowFilename:   workflowFilename,
 		targetRepository:   targetRepository,
 		targetOwner:        targetOwner,
+		targetRef:          targetRef,
 		waitForCheck:       waitForCheck,
 		waitTimeoutSeconds: waitTimeoutSeconds,
-		clientPayload:       clientPayload,
+		workflowInputs:     workflowInputs,
 	}, nil
 }
 
