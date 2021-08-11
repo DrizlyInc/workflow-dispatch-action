@@ -18,16 +18,14 @@ This action does three things:
     # Private key for the GitHub app id provided
     private_key: ${{ secrets.MY_APP_PRIVATE_KEY }}
 
-    # Name of the repository to target with the dispatch
+    #  Name and owner of the repository to target with the dispatch (owner/repo-name)
     target_repository: example-repository
-
-    # Owner of the target repository (user or organization)
-    target_owner: example-github-username
 
     # Ref which should be triggered on the target repository
     target_ref: main
 
-    # Name of the workflow file to trigger in the target repository (without .yml extension)
+    # The basename (no .yml extension) of the file in .github/workflows/ of
+    # the target_repository responding to the workflow_dispatch event
     workflow_filename: my-workflow
 
     # If true, this action will wait until the check it creates is updated
