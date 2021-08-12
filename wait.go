@@ -40,7 +40,7 @@ func pollForCheckCompletion(ctx context.Context, client *github.Client, githubVa
 		// If not, sleep for a bit and loop again
 		select {
 		case <-ctx.Done():
-			return false, fmt.Errorf("Timeout: %w", ctx.Err())
+			return false, fmt.Errorf("Abandoning check waiting: %w", ctx.Err())
 		default:
 			iterations += 1
 			time.Sleep(time.Second * time.Duration(secondsBetweenChecks))
