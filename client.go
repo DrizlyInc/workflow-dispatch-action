@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/bradleyfalzon/ghinstallation"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/google/go-github/v37/github"
 )
 
@@ -20,27 +19,17 @@ func newGithubClient(tr http.RoundTripper, githubVars githubVars, inputs inputs)
 	// use appTransport to generate a client
 	client := github.NewClient(&http.Client{Transport: itr})
 
-	// Get the list of installations
+	// We only need 1 installation since the app we are interested in only exists
+	// in the context of its 1 installation to our org/repo
 	opt := &github.ListOptions{
-		PerPage: 100,
+		PerPage: 1,
 	}
-	var allInstallations []*github.Installation
-	for {
-		installations, resp, err := client.Apps.ListInstallations(context.Background(), opt)
-		if err != nil {
-			return nil, fmt.Errorf("error getting installations: %w", err)
-		}
-		allInstallations = append(allInstallations, installations...)
-		if resp.NextPage == 0 {
-			break
-		}
-		opt.Page = resp.NextPage
+	installations, _, err := client.Apps.ListInstallations(context.Background(), opt)
+	if err != nil {
+		return nil, fmt.Errorf("Error fetching app installations: %w", err)
 	}
 
-	// search for the specific installation we care about
-	spew.Dump(allInstallations)
-
-	// construct client with the installation
-	ntr := ghinstallation.NewFromAppsTransport(itr, *allInstallations[0].ID)
+	// Take the first (only) installation we fetched
+	ntr := ghinstallation.NewFromAppsTransport(itr, *installations[0].ID)
 	return github.NewClient(&http.Client{Transport: ntr}), nil
 }

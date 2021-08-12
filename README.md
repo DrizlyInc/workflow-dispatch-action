@@ -13,6 +13,8 @@ This action does three things:
 
     # App ID for a GitHub app with write permissions to the dispatching repository
     # and target repository (for triggering workflows and writing creating checks)
+    # NOTE: This action assumes the given GitHub app only has a single installation
+    # and that installation will provide the required permissions
     app_id: ${{ secrets.MY_APP_ID }}
 
     # Private key for the GitHub app id provided
