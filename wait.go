@@ -42,6 +42,7 @@ func pollForCheckCompletion(ctx context.Context, client *github.Client, githubVa
 		case <-ctx.Done():
 			return false, fmt.Errorf("Timeout: %w", ctx.Err())
 		default:
+			iterations += 1
 			time.Sleep(time.Second * time.Duration(secondsBetweenChecks))
 		}
 	}
