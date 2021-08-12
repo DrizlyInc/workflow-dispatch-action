@@ -6,10 +6,12 @@ import (
 	"net/http"
 
 	"github.com/bradleyfalzon/ghinstallation"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/google/go-github/v37/github"
 )
 
 func newGithubClient(tr http.RoundTripper, githubVars githubVars, inputs inputs) (*github.Client, error) {
+
 	// https://github.com/google/go-github#authentication
 	// First, create an AppsTransport for initial auth
 	itr := ghinstallation.NewAppsTransportFromPrivateKey(tr, inputs.appID, inputs.privateKey)
@@ -36,7 +38,7 @@ func newGithubClient(tr http.RoundTripper, githubVars githubVars, inputs inputs)
 	}
 
 	// search for the specific installation we care about
-	// spew.Dump(allInstallations)
+	spew.Dump(allInstallations)
 
 	// construct client with the installation
 	ntr := ghinstallation.NewFromAppsTransport(itr, *allInstallations[0].ID)
