@@ -18,7 +18,7 @@ func pollForCheckCompletion(ctx context.Context, client *github.Client, githubVa
 	for {
 
 		secondsRemainingUntilTimeout := getSecondsRemaining(ctx)
-		githubactions.Infof("    Fetching check status (%vs remaining)... ", secondsRemainingUntilTimeout)
+		githubactions.Infof("    Fetching check status (%.2fs remaining)... ", secondsRemainingUntilTimeout)
 
 		apiTimeoutCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 		defer cancel()
