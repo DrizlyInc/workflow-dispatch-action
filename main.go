@@ -123,7 +123,7 @@ func scrapeOutputs(client *github.Client, githubVars githubVars, checkId int64) 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	check, _, err := client.Checks.GetCheckRun(ctx, githubVars.repositoryOwner, githubVars.repositoryName, checkId)
+	check, err := fetchCheckWithRetries(ctx, client, githubVars, int(checkId))
 	if err != nil {
 		githubactions.Fatalf("Error fetching check for output scraping: %v", err.Error())
 	}

@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v37/github"
+	"github.com/sethvargo/go-githubactions"
 )
 
 func newGithubClient(tr http.RoundTripper, githubVars githubVars, inputs inputs) (*github.Client, error) {
@@ -32,4 +34,27 @@ func newGithubClient(tr http.RoundTripper, githubVars githubVars, inputs inputs)
 	// Take the first (only) installation we fetched
 	ntr := ghinstallation.NewFromAppsTransport(itr, *installations[0].ID)
 	return github.NewClient(&http.Client{Transport: ntr}), nil
+}
+
+func fetchCheckWithRetries(ctx context.Context, client *github.Client, githubVars githubVars, checkId int) (*github.CheckRun, error) {
+	secondsBetweenAttempts := 1
+	maxAttempts := 4
+	attempts := 0
+
+	for {
+		check, _, err := client.Checks.GetCheckRun(ctx, githubVars.repositoryOwner, githubVars.repositoryName, int64(checkId))
+		attempts += 1
+
+		if err != nil {
+			githubactions.Warningf("Error fetching check %v (attempt %v of %v): %w", checkId, attempts, maxAttempts, err)
+			time.Sleep(time.Second * time.Duration(secondsBetweenAttempts))
+		} else {
+			return check, nil
+		}
+
+		if attempts == maxAttempts {
+			return nil, fmt.Errorf("Exceeded max attempts fetching check %v: %w", checkId, err)
+		}
+	}
+
 }
