@@ -4,9 +4,11 @@ import (
 	"strings"
 )
 
+var outputsStartIndicator = "---- BEGIN CHECK OUTPUT ----"
+
 func parseOutputsFromText(reportText *string) string {
 
-	splitReport := strings.Split(*reportText, "---- BEGIN CHECK OUTPUT ----")
+	splitReport := strings.Split(*reportText, outputsStartIndicator)
 	if len(splitReport) < 2 {
 		return ""
 	}

@@ -7,7 +7,7 @@ import (
 
 func TestParseOutputNonEmpty(t *testing.T) {
 
-	reportText := "\n```\nHere is a terraform plan for example\n```\n\n# Outputs:\n```json ---- BEGIN CHECK OUTPUT ----\n" + `
+	reportText := "\n```\nHere is a terraform plan for example\n```\n\n# Outputs:\n```json " + outputsStartIndicator + "\n" + `
 {
 	"my_output": "my_value"
 }
