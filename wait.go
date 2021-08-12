@@ -9,29 +9,30 @@ import (
 	"github.com/sethvargo/go-githubactions"
 )
 
-func checkWaiter(ctx context.Context, client *github.Client, owner, repo string, id int) error {
-	githubactions.Infof("Waiting for check %v\n", id)
-	// loop forever  (we handle breaking out later)
-	for {
-		githubactions.Infof("Getting status of checkID %v\n", id)
+const secondsBetweenChecks = 5
 
-		// get status of check
+func pollForCheckCompletion(ctx context.Context, client *github.Client, githubVars githubVars, inputs inputs, checkId int) (bool, error) {
+	githubactions.Infof("Waiting for check %v to complete (%vs timeout) ...\n", checkId, inputs.waitTimeoutSeconds)
+
+	// loop forever (we handle breaking out later)
+	iterations := 0
+	for {
+
+		secondsRemainingUntilTimeout := inputs.waitTimeoutSeconds - int64(secondsBetweenChecks*iterations)
+		githubactions.Infof("    Fetching check status (%vs remaining)... ", secondsRemainingUntilTimeout)
+
 		apiTimeoutCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 		defer cancel()
 
-		check, _, err := client.Checks.GetCheckRun(apiTimeoutCtx, owner, repo, int64(id))
+		check, _, err := client.Checks.GetCheckRun(apiTimeoutCtx, githubVars.repositoryOwner, githubVars.repositoryName, int64(checkId))
 		if err != nil {
-			return fmt.Errorf("unable to get status of check %v: %w", id, err)
+			githubactions.Infof("FAILED\n")
+			return false, fmt.Errorf("Error fetching check %v: %w", checkId, err)
 		}
+		githubactions.Infof("%v\n", *check.Status)
 
-		switch {
-		case *check.Status != "completed":
-			githubactions.Infof("Check %v not yet finished\n", id)
-		case *check.Status == "completed" && *check.Conclusion != "success":
-			return fmt.Errorf("check %v finished with unsuccessful conclusion: %v", id, *check.Conclusion)
-		case *check.Status == "completed" && *check.Conclusion == "success":
-			// success
-			return nil
+		if *check.Status == "completed" {
+			return *check.Conclusion == "success", nil
 		}
 
 		// check if context has been closed(either by timeout or another error in err group).
@@ -39,9 +40,10 @@ func checkWaiter(ctx context.Context, client *github.Client, owner, repo string,
 		// If not, sleep for a bit and loop again
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("stopping check for id %v: %w", id, ctx.Err())
+			return false, fmt.Errorf("Abandoning check waiting: %w", ctx.Err())
 		default:
-			time.Sleep(time.Second * 5)
+			iterations += 1
+			time.Sleep(time.Second * time.Duration(secondsBetweenChecks))
 		}
 	}
 }

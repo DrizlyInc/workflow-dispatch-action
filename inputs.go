@@ -1,20 +1,15 @@
 package main
 
 import (
-	"context"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
-
-	"github.com/bradleyfalzon/ghinstallation"
-	"github.com/google/go-github/v37/github"
 )
 
 type inputs struct {
@@ -29,7 +24,7 @@ type inputs struct {
 	workflowInputs     map[string]interface{}
 }
 
-func getInputs() (inputs, error) {
+func parseInputs() (inputs, error) {
 
 	appIDString, ok := os.LookupEnv("INPUT_APP_ID")
 	if !ok {
@@ -113,42 +108,4 @@ func getInputs() (inputs, error) {
 		waitTimeoutSeconds: waitTimeoutSeconds,
 		workflowInputs:     workflowInputs,
 	}, nil
-}
-
-func newGithubClient(tr http.RoundTripper, appID int64, privateKey *rsa.PrivateKey) (*github.Client, error) {
-	// https://github.com/google/go-github#authentication
-	// First, create an AppsTransport for initial auth
-	itr := ghinstallation.NewAppsTransportFromPrivateKey(tr, appID, privateKey)
-	baseURL, ok := os.LookupEnv("GITHUB_API_URL")
-	if !ok {
-		return nil, errors.New("env var 'GITHUB_API_URL' is not set")
-	}
-	itr.BaseURL = baseURL
-
-	// use appTransport to generate a client
-	client := github.NewClient(&http.Client{Transport: itr})
-
-	// Get the list of installations
-	opt := &github.ListOptions{
-		PerPage: 100,
-	}
-	var allInstallations []*github.Installation
-	for {
-		installations, resp, err := client.Apps.ListInstallations(context.Background(), opt)
-		if err != nil {
-			return nil, fmt.Errorf("error getting installations: %w", err)
-		}
-		allInstallations = append(allInstallations, installations...)
-		if resp.NextPage == 0 {
-			break
-		}
-		opt.Page = resp.NextPage
-	}
-
-	// search for the specific installation we care about
-	// spew.Dump(allInstallations)
-
-	// construct client with the installation
-	ntr := ghinstallation.NewFromAppsTransport(itr, *allInstallations[0].ID)
-	return github.NewClient(&http.Client{Transport: ntr}), nil
 }
