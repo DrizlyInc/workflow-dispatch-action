@@ -15,16 +15,15 @@ func pollForCheckCompletion(ctx context.Context, client *github.Client, githubVa
 	githubactions.Infof("Waiting for check %v to complete (%vs timeout) ...\n", checkId, inputs.waitTimeoutSeconds)
 
 	// loop forever (we handle breaking out later)
-	iterations := 0
 	for {
 
-		secondsRemainingUntilTimeout := inputs.waitTimeoutSeconds - int64(secondsBetweenChecks*iterations)
-		githubactions.Infof("    Fetching check status (%vs remaining)... ", secondsRemainingUntilTimeout)
+		secondsRemainingUntilTimeout := getSecondsRemaining(ctx)
+		githubactions.Infof("    Fetching check status (%.2fs remaining)... ", secondsRemainingUntilTimeout)
 
 		apiTimeoutCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 		defer cancel()
 
-		check, _, err := client.Checks.GetCheckRun(apiTimeoutCtx, githubVars.repositoryOwner, githubVars.repositoryName, int64(checkId))
+		check, err := fetchCheckWithRetries(apiTimeoutCtx, client, githubVars, checkId)
 		if err != nil {
 			githubactions.Infof("FAILED\n")
 			return false, fmt.Errorf("Error fetching check %v: %w", checkId, err)
@@ -42,8 +41,13 @@ func pollForCheckCompletion(ctx context.Context, client *github.Client, githubVa
 		case <-ctx.Done():
 			return false, fmt.Errorf("Abandoning check waiting: %w", ctx.Err())
 		default:
-			iterations += 1
 			time.Sleep(time.Second * time.Duration(secondsBetweenChecks))
 		}
 	}
+}
+
+func getSecondsRemaining(ctx context.Context) float64 {
+	deadline, _ := ctx.Deadline()
+	timeRemaining := deadline.Sub(time.Now())
+	return timeRemaining.Seconds()
 }

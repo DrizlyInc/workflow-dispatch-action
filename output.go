@@ -7,6 +7,9 @@ import (
 const outputsStartIndicator = "---- BEGIN CHECK OUTPUT ----"
 
 func parseOutputsFromText(reportText *string) string {
+	if reportText == nil {
+		return ""
+	}
 
 	splitReport := strings.Split(*reportText, outputsStartIndicator)
 	if len(splitReport) < 2 {
