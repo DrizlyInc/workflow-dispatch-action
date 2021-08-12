@@ -20,7 +20,7 @@ func TestParseOutputNonEmpty(t *testing.T) {
 }
 `
 
-	parsedOutputs := parseOutputs(&reportText)
+	parsedOutputs := parseOutputsFromText(&reportText)
 	if strings.TrimSpace(expectedOutputs) != parsedOutputs {
 		t.Error()
 	}
@@ -31,7 +31,7 @@ func TestParseOutputEmpty(t *testing.T) {
 
 	reportText := "\n```\nHere is a terraform plan for example\n```"
 
-	parsedOutputs := parseOutputs(&reportText)
+	parsedOutputs := parseOutputsFromText(&reportText)
 	if "" != parsedOutputs {
 		t.Error()
 	}

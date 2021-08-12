@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-func parseOutputs(reportText *string) string {
+func parseOutputsFromText(reportText *string) string {
 
 	splitReport := strings.Split(*reportText, "---- BEGIN CHECK OUTPUT ----")
 	if len(splitReport) < 2 {
