@@ -9,13 +9,17 @@ import (
 	"github.com/sethvargo/go-githubactions"
 )
 
+var secondsBetweenChecks = 5
+
 func pollForCheckCompletion(ctx context.Context, client *github.Client, githubVars githubVars, inputs inputs, checkId int) (bool, error) {
 	githubactions.Infof("Waiting for check %v to complete (%vs timeout) ...\n", checkId, inputs.waitTimeoutSeconds)
 
 	// loop forever (we handle breaking out later)
+	iterations := 0
 	for {
 
-		githubactions.Infof("    Fetching check status ... ")
+		secondsRemainingUntilTimeout := inputs.waitTimeoutSeconds - int64(secondsBetweenChecks*iterations)
+		githubactions.Infof("    Fetching check status (%vs remaining)... ", secondsRemainingUntilTimeout)
 
 		apiTimeoutCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 		defer cancel()
@@ -38,7 +42,7 @@ func pollForCheckCompletion(ctx context.Context, client *github.Client, githubVa
 		case <-ctx.Done():
 			return false, fmt.Errorf("Timeout: %w", ctx.Err())
 		default:
-			time.Sleep(time.Second * 5)
+			time.Sleep(time.Second * time.Duration(secondsBetweenChecks))
 		}
 	}
 }
