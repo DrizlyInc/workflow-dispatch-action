@@ -9,7 +9,7 @@ import (
 	"github.com/sethvargo/go-githubactions"
 )
 
-var secondsBetweenChecks = 5
+const secondsBetweenChecks = 5
 
 func pollForCheckCompletion(ctx context.Context, client *github.Client, githubVars githubVars, inputs inputs, checkId int) (bool, error) {
 	githubactions.Infof("Waiting for check %v to complete (%vs timeout) ...\n", checkId, inputs.waitTimeoutSeconds)

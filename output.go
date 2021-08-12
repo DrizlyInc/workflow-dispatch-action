@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-var outputsStartIndicator = "---- BEGIN CHECK OUTPUT ----"
+const outputsStartIndicator = "---- BEGIN CHECK OUTPUT ----"
 
 func parseOutputsFromText(reportText *string) string {
 
