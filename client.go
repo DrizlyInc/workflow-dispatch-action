@@ -59,7 +59,7 @@ func fetchCheckWithRetries(ctx context.Context, client *github.Client, githubVar
 
 }
 
-func validateTargetWorkflowExistsOnDefaultBranch(ctx context.Context, client *github.Client, inputs inputs) {
+func validateTargetWorkflowExistsOnDefaultBranch(ctx context.Context, client *github.Client, githubVars githubVars, inputs inputs) {
 	targetRepository, _, err := client.Repositories.Get(ctx, inputs.targetOwner, inputs.targetRepository)
 	if err != nil {
 		githubactions.Fatalf("Failed to fetch target repository information: %w", err)
@@ -70,6 +70,8 @@ func validateTargetWorkflowExistsOnDefaultBranch(ctx context.Context, client *gi
 		Ref: *targetRepository.DefaultBranch,
 	})
 	if err != nil {
-		githubactions.Fatalf("The target workflow must exist on the default branch of the target repository!")
+		// https://github.com/DrizlyInc/distillery/blob/main/.github/workflows/tutorial00.yml
+		expectedFileLocation := fmt.Sprintf("%v/%v/%v/blob/%v/%v", githubVars.serverUrl, inputs.targetOwner, inputs.targetRepository, *targetRepository.DefaultBranch, targetWorkflowFilepath)
+		githubactions.Fatalf("The target workflow must exist on the default branch of the target repository!\nExpected to find it at: %v", expectedFileLocation)
 	}
 }
