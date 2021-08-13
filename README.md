@@ -5,6 +5,10 @@ This action does three things:
 2. Triggers a [`workflow_dispatch` event](https://docs.github.com/en/actions/reference/events-that-trigger-workflows#workflow_dispatch) in another (target) repository
 3. Optionally waits for the check to updated to a completed status by a workflow in the target repository
 
+# Gotchas
+
+* `target_ref` allows you to specify which version of the workflow to trigger in the target repository, but that workflow MUST exist on the default branch in order for the GitHub API to recognize it as valid [[reference](https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow#configuring-a-workflow-to-run-manually)].
+
 # Usage
 
 ```yaml

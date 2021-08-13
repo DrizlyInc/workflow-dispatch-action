@@ -86,8 +86,13 @@ func dispatchWorkflow(client *github.Client, githubVars githubVars, inputs input
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
+	validateTargetWorkflowExistsOnDefaultBranch(ctx, client, inputs)
+
 	fullWorkflowFilename := fmt.Sprintf("%s.yml", inputs.workflowFilename)
 	githubactions.Infof("Dispatching to %v workflow in %v/%v@%v\n", fullWorkflowFilename, inputs.targetOwner, inputs.targetRepository, inputs.targetRef)
+
+	ctx, cancel = context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
 
 	_, err = client.Actions.CreateWorkflowDispatchEventByFileName(ctx, inputs.targetOwner, inputs.targetRepository, fullWorkflowFilename, github.CreateWorkflowDispatchEventRequest{
 		Ref:    inputs.targetRef,

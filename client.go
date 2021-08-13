@@ -58,3 +58,18 @@ func fetchCheckWithRetries(ctx context.Context, client *github.Client, githubVar
 	}
 
 }
+
+func validateTargetWorkflowExistsOnDefaultBranch(ctx context.Context, client *github.Client, inputs inputs) {
+	targetRepository, _, err := client.Repositories.Get(ctx, inputs.targetOwner, inputs.targetRepository)
+	if err != nil {
+		githubactions.Fatalf("Failed to fetch target repository information: %w", err)
+	}
+
+	targetWorkflowFilepath := fmt.Sprintf(".github/workflows/%v.yml", inputs.workflowFilename)
+	_, _, _, err = client.Repositories.GetContents(ctx, inputs.targetOwner, inputs.targetRepository, targetWorkflowFilepath, &github.RepositoryContentGetOptions{
+		Ref: *targetRepository.DefaultBranch,
+	})
+	if err != nil {
+		githubactions.Fatalf("The target workflow must exist on the default branch of the target repository!")
+	}
+}
