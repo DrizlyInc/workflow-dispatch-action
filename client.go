@@ -80,9 +80,11 @@ func validateTargetWorkflowExistsOnDefaultBranch(ctx context.Context, client *gi
 			Ref: inputs.targetRef,
 		})
 		if err != nil {
-			githubactions.Fatalf("Please add a dummy %v file to branch '%v' to 'register' the workflow with the GitHub API and try again!", workflowFilepath, *targetRepository.DefaultBranch)
-		} else {
+			// Target branch also does not include the workflow
 			githubactions.Fatalf("The target workflow was also not found at %v. Do you maybe have a typo in the filename?", inputs.targetRef)
+		} else {
+			// Workflow is in target branch but not the default branch
+			githubactions.Fatalf("Please add a dummy %v file to branch '%v' to 'register' the workflow with the GitHub API and try again!", workflowFilepath, *targetRepository.DefaultBranch)
 		}
 
 	}
