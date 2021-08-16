@@ -60,29 +60,29 @@ func fetchCheckWithRetries(ctx context.Context, client *github.Client, githubVar
 }
 
 func validateTargetWorkflowExistsOnDefaultBranch(ctx context.Context, client *github.Client, githubVars githubVars, inputs inputs) {
-	targetRepository, _, err := client.Repositories.Get(ctx, inputs.targetOwner, inputs.targetRepository)
-	if err != nil {
-		githubactions.Fatalf("Failed to fetch target repository information: %w", err)
+	targetRepository, _, fetchRepoErr := client.Repositories.Get(ctx, inputs.targetOwner, inputs.targetRepository)
+	if fetchRepoErr != nil {
+		githubactions.Fatalf("Failed to fetch target repository information: %w", fetchRepoErr)
 	}
 
 	workflowFilepath := fmt.Sprintf(".github/workflows/%v.yml", inputs.workflowFilename)
-	_, _, _, err = client.Repositories.GetContents(ctx, inputs.targetOwner, inputs.targetRepository, workflowFilepath, &github.RepositoryContentGetOptions{
+	_, _, _, fetchDefaultBranchWorkflowErr := client.Repositories.GetContents(ctx, inputs.targetOwner, inputs.targetRepository, workflowFilepath, &github.RepositoryContentGetOptions{
 		Ref: *targetRepository.DefaultBranch,
 	})
-	if err != nil {
+	if fetchDefaultBranchWorkflowErr != nil {
 
 		// https://github.com/DrizlyInc/distillery/blob/main/.github/workflows/tutorial00.yml
 		expectedFileUrl := fmt.Sprintf("%v/%v/%v/blob/%v/%v", githubVars.serverUrl, inputs.targetOwner, inputs.targetRepository, *targetRepository.DefaultBranch, workflowFilepath)
 		githubactions.Errorf("The target workflow must exist on the default branch of the target repository!")
 		githubactions.Errorf("Expected to find it at: %v", expectedFileUrl)
 
-		_, _, _, err = client.Repositories.GetContents(ctx, inputs.targetOwner, inputs.targetRepository, workflowFilepath, &github.RepositoryContentGetOptions{
+		_, _, _, fetchTargetBranchWorkflowErr := client.Repositories.GetContents(ctx, inputs.targetOwner, inputs.targetRepository, workflowFilepath, &github.RepositoryContentGetOptions{
 			Ref: inputs.targetRef,
 		})
-		if err != nil && inputs.targetRef != *targetRepository.DefaultBranch {
+		if fetchTargetBranchWorkflowErr != nil && inputs.targetRef != *targetRepository.DefaultBranch {
 			// Target branch also does not include the workflow
 			githubactions.Fatalf("The target workflow was also not found on the target branch: %v. Do you maybe have a typo in the filename?", inputs.targetRef)
-		} else if err != nil {
+		} else if fetchTargetBranchWorkflowErr != nil {
 			// Target branch IS the default branch but the workflow is missing
 			githubactions.Fatalf("Do you maybe have a typo in the filename?")
 		} else if inputs.targetRef != *targetRepository.DefaultBranch {
