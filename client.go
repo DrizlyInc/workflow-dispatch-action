@@ -65,13 +65,25 @@ func validateTargetWorkflowExistsOnDefaultBranch(ctx context.Context, client *gi
 		githubactions.Fatalf("Failed to fetch target repository information: %w", err)
 	}
 
-	targetWorkflowFilepath := fmt.Sprintf(".github/workflows/%v.yml", inputs.workflowFilename)
-	_, _, _, err = client.Repositories.GetContents(ctx, inputs.targetOwner, inputs.targetRepository, targetWorkflowFilepath, &github.RepositoryContentGetOptions{
+	workflowFilepath := fmt.Sprintf(".github/workflows/%v.yml", inputs.workflowFilename)
+	_, _, _, err = client.Repositories.GetContents(ctx, inputs.targetOwner, inputs.targetRepository, workflowFilepath, &github.RepositoryContentGetOptions{
 		Ref: *targetRepository.DefaultBranch,
 	})
 	if err != nil {
+
 		// https://github.com/DrizlyInc/distillery/blob/main/.github/workflows/tutorial00.yml
-		expectedFileLocation := fmt.Sprintf("%v/%v/%v/blob/%v/%v", githubVars.serverUrl, inputs.targetOwner, inputs.targetRepository, *targetRepository.DefaultBranch, targetWorkflowFilepath)
-		githubactions.Fatalf("The target workflow must exist on the default branch of the target repository!\nExpected to find it at: %v", expectedFileLocation)
+		expectedFileUrl := fmt.Sprintf("%v/%v/%v/blob/%v/%v", githubVars.serverUrl, inputs.targetOwner, inputs.targetRepository, *targetRepository.DefaultBranch, workflowFilepath)
+		githubactions.Errorf("The target workflow must exist on the default branch of the target repository!")
+		githubactions.Errorf("Expected to find it at: %v", expectedFileUrl)
+
+		_, _, _, err = client.Repositories.GetContents(ctx, inputs.targetOwner, inputs.targetRepository, workflowFilepath, &github.RepositoryContentGetOptions{
+			Ref: inputs.targetRef,
+		})
+		if err != nil {
+			githubactions.Errorf("Please add a dummy %v file to %v to 'register' the workflow with the GitHub API and try again!", workflowFilepath, *targetRepository.DefaultBranch)
+		} else {
+			githubactions.Fatalf("The target workflow was also not found at %v. Do you maybe have a typo in the filename?", inputs.targetRef)
+		}
+
 	}
 }
