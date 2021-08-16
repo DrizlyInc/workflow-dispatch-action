@@ -3,7 +3,8 @@ name: PR Validation
 on: pull_request
 
 jobs:
-  DistilleryX-terraform-plan:
+
+  Build-Image:
 
     runs-on: ubuntu-latest
     steps:
