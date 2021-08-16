@@ -2,35 +2,35 @@ name: PR Validation
 
 on: pull_request
 
-env:
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
 
   Validate:
     runs-on: ubuntu-latest
     steps:
 
+      - name: Prepare Image Name
+        run: echo IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+
       - name: Checkout
         uses: actions/checkout@v2
 
       - name: build builder image
-        run: docker build --target builder -t ${IMAGE_NAME}/builder .
+        run: docker build --target builder -t ${{ env.IMAGE_NAME }}/builder .
 
       - name: build unit-tester image
-        run: docker build --target unit-tester -t ${IMAGE_NAME}/unit-tester .
+        run: docker build --target unit-tester -t ${{ env.IMAGE_NAME }}/unit-tester .
 
       - name: build linter image
-        run: docker build --target linter -t ${IMAGE_NAME}/linter .
+        run: docker build --target linter -t ${{ env.IMAGE_NAME }}/linter .
 
       - name: Lint
-        run: docker run --rm ${IMAGE_NAME}/linter
+        run: docker run --rm ${{ env.IMAGE_NAME }}/linter
 
       - name: Unit Test
-        run: docker run --rm ${IMAGE_NAME}/unit-tester
+        run: docker run --rm ${{ env.IMAGE_NAME }}/unit-tester
 
       - name: build production image
-        run: docker build --target production -t ${IMAGE_NAME} .
+        run: docker build --target production -t ${{ env.IMAGE_NAME }} .
 
       # - name: Push To GitHub Container Registry
       #   uses: redhat-actions/push-to-registry@v2
