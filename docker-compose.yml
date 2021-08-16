@@ -1,0 +1,20 @@
+version: "3.8"
+
+
+# Default service build args
+x-build:
+  &default-build
+  context: .
+  dockerfile: Dockerfile
+
+services:
+
+  linter:
+    build:
+      << : *default-build
+      target: linter
+
+  unit-tester:
+    build:
+      << : *default-build
+      target: unit-tester
