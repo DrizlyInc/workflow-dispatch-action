@@ -29,7 +29,11 @@ jobs:
       # ---------------------------------------------
 
       - name: build production image
-        run: docker build -t ${{ env.IMAGE_NAME}} .
+        run: |
+          docker build \
+            -t ${{ env.IMAGE_NAME}}:latest \
+            -t ${{ env.IMAGE_NAME}}:${{ github.sha }} \
+            .
 
       - name: Push To GitHub Container Registry
         uses: redhat-actions/push-to-registry@v2
