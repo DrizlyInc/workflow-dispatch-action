@@ -14,6 +14,12 @@ RUN go mod download
 COPY . .
 RUN go build -o app
 
+FROM builder AS linter
+ENTRYPOINT GOFMT_OUTPUT="$(gofmt -d -e .)"; if [ -n "$GOFMT_OUTPUT" ]; then echo "${GOFMT_OUTPUT}"; exit 1 ; fi
+
+FROM builder AS unit-tester
+CMD go test -v ./...
+
 FROM gcr.io/distroless/base:nonroot AS production
 # set user to nonroot
 USER nonroot
