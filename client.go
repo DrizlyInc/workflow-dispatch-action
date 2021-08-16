@@ -46,7 +46,7 @@ func fetchCheckWithRetries(ctx context.Context, client *github.Client, githubVar
 		attempts += 1
 
 		if err != nil {
-			githubactions.Warningf("Error fetching check %v (attempt %v of %v): %w", checkId, attempts, maxAttempts, err)
+			githubactions.Warningf("Error fetching check %v (attempt %v of %v): %v", checkId, attempts, maxAttempts, err.Error())
 			time.Sleep(time.Second * time.Duration(secondsBetweenAttempts))
 		} else {
 			return check, nil
@@ -62,7 +62,7 @@ func fetchCheckWithRetries(ctx context.Context, client *github.Client, githubVar
 func validateTargetWorkflowExistsOnDefaultBranch(ctx context.Context, client *github.Client, githubVars githubVars, inputs inputs) {
 	targetRepository, _, fetchRepoErr := client.Repositories.Get(ctx, inputs.targetOwner, inputs.targetRepository)
 	if fetchRepoErr != nil {
-		githubactions.Fatalf("Failed to fetch target repository information: %w", fetchRepoErr)
+		githubactions.Fatalf("Failed to fetch target repository information: %v", fetchRepoErr.Error())
 	}
 
 	workflowFilepath := fmt.Sprintf(".github/workflows/%v.yml", inputs.workflowFilename)
