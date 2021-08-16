@@ -14,7 +14,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: build images
+      - name: build CI images
         run: |
           docker build --target builder -t ${{ env.IMAGE_NAME }}/builder . && \
           docker build --target unit-tester -t ${{ env.IMAGE_NAME }}/unit-tester . && \
@@ -28,7 +28,7 @@ jobs:
 
       # ---------------------------------------------
 
-      - name: build image
+      - name: build production image
         run: docker build -t ${{ env.IMAGE_NAME}}
 
       - name: Push To GitHub Container Registry
