@@ -36,7 +36,7 @@ inputs:
     description: Number of seconds to wait for the check before timing out (ignored if wait_for_check is false). Inlcudes setup time to pull actions, etc
 
   workflow_inputs:
-    required: true
+    default: '{}'
     description: Inputs to pass to the workflow, must be a JSON encoded string ex. '{ "myinput":"myvalue" }'
 
 outputs:
