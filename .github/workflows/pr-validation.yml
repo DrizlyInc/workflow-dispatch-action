@@ -8,20 +8,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Prepare Image Name
+      - name: Create Lowercase Image Name
         run: echo IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
 
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: build builder image
-        run: docker build --target builder -t ${{ env.IMAGE_NAME }}/builder .
-
-      - name: build unit-tester image
-        run: docker build --target unit-tester -t ${{ env.IMAGE_NAME }}/unit-tester .
-
-      - name: build linter image
-        run: docker build --target linter -t ${{ env.IMAGE_NAME }}/linter .
+      - name: build images
+        run: |
+          docker build --target builder -t ${{ env.IMAGE_NAME }}/builder . && \
+          docker build --target unit-tester -t ${{ env.IMAGE_NAME }}/unit-tester . && \
+          docker build --target linter -t ${{ env.IMAGE_NAME }}/linter .
 
       - name: Lint
         run: docker run --rm ${{ env.IMAGE_NAME }}/linter
@@ -29,14 +26,16 @@ jobs:
       - name: Unit Test
         run: docker run --rm ${{ env.IMAGE_NAME }}/unit-tester
 
-      - name: build production image
-        run: docker build --target production -t ${{ env.IMAGE_NAME }} .
+      # ---------------------------------------------
 
-      # - name: Push To GitHub Container Registry
-      #   uses: redhat-actions/push-to-registry@v2
-      #   with:
-      #     image: ${{ steps.build-image.outputs.image }}
-      #     tags: ${{ steps.build-image.outputs.tags }}
-      #     registry: quay.io/quay-user
-      #     username: quay-user
-      #     password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: build image
+        run: docker build -t ${{ env.IMAGE_NAME}}
+
+      - name: Push To GitHub Container Registry
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ github.sha }} latest
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}

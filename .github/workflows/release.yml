@@ -5,14 +5,26 @@ on:
     branches:
       - master
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
 
-  Say-Hello:
+  Validate:
     runs-on: ubuntu-latest
     steps:
 
-      - run: echo "Hello, World!"
+      - name: Create Lowercase Image Name
+        run: echo IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: build image
+        run: docker build -t ${{ env.IMAGE_NAME}}
+
+      - name: Push To GitHub Container Registry
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ github.sha }} latest
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
