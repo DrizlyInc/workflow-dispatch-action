@@ -18,7 +18,7 @@ jobs:
         run: echo "::set-output name=version::$(cat action.yml | tail -1 | cut -d ':' -f4)"
 
       - name: Ensure Version Available
-        run: git tag
+        run: .github/workflow-scripts/check-version-available.sh ${{ steps.parse-version.outputs.version }}
 
       # - name: Create Lowercase Image Name
       #   run: echo IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
