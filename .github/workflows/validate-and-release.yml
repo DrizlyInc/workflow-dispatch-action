@@ -8,14 +8,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Parse Version From action.yml
+        id: parse-version
+        run: echo '::set-output name=version::$(cat action.yml | tail -1 | cut -d ':' -f4)'
+        # run: echo VERSION=$(cat action.yml | tail -1 | cut -d ':' -f4) >> $GITHUB_ENV
+
       - name: test
-        run: git describe --tags
+        run: echo ${{ steps.parse-version.outputs.version }}
 
       # - name: Create Lowercase Image Name
       #   run: echo IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
-
-      # - name: Checkout
-      #   uses: actions/checkout@v2
 
       # - name: build CI images
       #   run: |
