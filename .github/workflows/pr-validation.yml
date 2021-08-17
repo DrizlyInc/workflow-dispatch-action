@@ -28,18 +28,11 @@ jobs:
 
       # ---------------------------------------------
 
-      - name: build production image
-        run: |
-          docker build \
-            -t ${{ env.IMAGE_NAME}}:latest \
-            -t ${{ env.IMAGE_NAME}}:${{ github.sha }} \
-            .
-
-      - name: Push To GitHub Container Registry
-        uses: redhat-actions/push-to-registry@v2
+      - name: Publish Image
+        uses: matootie/github-docker@v3.1.0
         with:
-          image: ${{ env.IMAGE_NAME }}
-          tags: ${{ github.sha }} latest
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          accessToken: ${{ secrets.GITHUB_TOKEN }}
+          containerRegistry: true
+          tag: |
+            latest
+            ${{ github.sha }}
