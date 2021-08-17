@@ -13,7 +13,7 @@ jobs:
 
       - name: Parse Version From action.yml
         id: parse-version
-        run: echo '::set-output name=version::$(cat action.yml | tail -1 | cut -d ':' -f4)'
+        run: echo "::set-output name=version::$(cat action.yml | tail -1 | cut -d ':' -f4)"
         # run: echo VERSION=$(cat action.yml | tail -1 | cut -d ':' -f4) >> $GITHUB_ENV
 
       - name: test
