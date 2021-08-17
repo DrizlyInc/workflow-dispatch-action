@@ -1,10 +1,10 @@
 name: PR Validation
 
-on: pull_request
+on: push
 
 jobs:
 
-  Validate:
+  validate:
     runs-on: ubuntu-latest
     steps:
 
@@ -26,9 +26,13 @@ jobs:
       - name: Unit Test
         run: docker run --rm ${{ env.IMAGE_NAME }}/unit-tester
 
-      # ---------------------------------------------
+  release:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
 
-      - name: Publish Image
+      - name: Build and Publish Image
         uses: matootie/github-docker@v3.1.0
         with:
           accessToken: ${{ secrets.GITHUB_TOKEN }}
