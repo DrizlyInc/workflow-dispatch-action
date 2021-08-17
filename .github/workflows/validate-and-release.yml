@@ -6,6 +6,8 @@ jobs:
 
   validate:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.parse-version.outputs.version }}
     steps:
 
       - name: Checkout
@@ -14,10 +16,9 @@ jobs:
       - name: Parse Version From action.yml
         id: parse-version
         run: echo "::set-output name=version::$(cat action.yml | tail -1 | cut -d ':' -f4)"
-        # run: echo VERSION=$(cat action.yml | tail -1 | cut -d ':' -f4) >> $GITHUB_ENV
 
-      - name: test
-        run: echo ${{ steps.parse-version.outputs.version }}
+      - name: Ensure Version Available
+        run: "! git tag | grep ${{ steps.parse-version.outputs.version }}"
 
       # - name: Create Lowercase Image Name
       #   run: echo IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
@@ -40,16 +41,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Parse Version From action.yml
-        run: echo VERSION=$(cat action.yml | tail -1 | cut -d ':' -f4) >> $GITHUB_ENV
-
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.VERSION }}
+          tag_name: ${{ needs.validate.outputs.version }}
 
       - name: Build and Publish Image
         uses: matootie/github-docker@v3.1.0
@@ -58,5 +53,5 @@ jobs:
           containerRegistry: true
           tag: |
             latest
-            ${{ env.VERSION }}
+            ${{ needs.validate.outputs.version }}
             ${{ github.sha }}
