@@ -8,41 +8,50 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Create Lowercase Image Name
-        run: echo IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+      - name: test
+        run: git describe --tags
 
-      - name: Checkout
-        uses: actions/checkout@v2
+      # - name: Create Lowercase Image Name
+      #   run: echo IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
 
-      - name: build CI images
-        run: |
-          docker build --target builder -t ${{ env.IMAGE_NAME }}/builder . && \
-          docker build --target unit-tester -t ${{ env.IMAGE_NAME }}/unit-tester . && \
-          docker build --target linter -t ${{ env.IMAGE_NAME }}/linter .
+      # - name: Checkout
+      #   uses: actions/checkout@v2
 
-      - name: Lint
-        run: docker run --rm ${{ env.IMAGE_NAME }}/linter
+      # - name: build CI images
+      #   run: |
+      #     docker build --target builder -t ${{ env.IMAGE_NAME }}/builder . && \
+      #     docker build --target unit-tester -t ${{ env.IMAGE_NAME }}/unit-tester . && \
+      #     docker build --target linter -t ${{ env.IMAGE_NAME }}/linter .
 
-      - name: Unit Test
-        run: docker run --rm ${{ env.IMAGE_NAME }}/unit-tester
+      # - name: Lint
+      #   run: docker run --rm ${{ env.IMAGE_NAME }}/linter
+
+      # - name: Unit Test
+      #   run: docker run --rm ${{ env.IMAGE_NAME }}/unit-tester
 
   release:
-    # if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     needs: validate
     runs-on: ubuntu-latest
     steps:
 
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Parse Version From action.yml
         run: echo VERSION=$(cat action.yml | tail -1 | cut -d ':' -f4) >> $GITHUB_ENV
 
-      - name: debug
-        run: echo ${{ env.VERSION }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.VERSION }}
 
-      # - name: Build and Publish Image
-      #   uses: matootie/github-docker@v3.1.0
-      #   with:
-      #     accessToken: ${{ secrets.GITHUB_TOKEN }}
-      #     containerRegistry: true
-      #     tag: |
-      #       latest
-      #       ${{ github.sha }}
+      - name: Build and Publish Image
+        uses: matootie/github-docker@v3.1.0
+        with:
+          accessToken: ${{ github.token }}
+          containerRegistry: true
+          tag: |
+            latest
+            ${{ env.VERSION }}
+            ${{ github.sha }}
