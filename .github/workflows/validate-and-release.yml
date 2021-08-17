@@ -20,20 +20,20 @@ jobs:
       - name: Ensure Version Available
         run: .github/workflow-scripts/check-version-available.sh ${{ steps.parse-version.outputs.version }}
 
-      # - name: Create Lowercase Image Name
-      #   run: echo IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+      - name: Create Lowercase Image Name
+        run: echo IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
 
-      # - name: build CI images
-      #   run: |
-      #     docker build --target builder -t ${{ env.IMAGE_NAME }}/builder . && \
-      #     docker build --target unit-tester -t ${{ env.IMAGE_NAME }}/unit-tester . && \
-      #     docker build --target linter -t ${{ env.IMAGE_NAME }}/linter .
+      - name: build CI images
+        run: |
+          docker build --target builder -t ${{ env.IMAGE_NAME }}/builder . && \
+          docker build --target unit-tester -t ${{ env.IMAGE_NAME }}/unit-tester . && \
+          docker build --target linter -t ${{ env.IMAGE_NAME }}/linter .
 
-      # - name: Lint
-      #   run: docker run --rm ${{ env.IMAGE_NAME }}/linter
+      - name: Lint
+        run: docker run --rm ${{ env.IMAGE_NAME }}/linter
 
-      # - name: Unit Test
-      #   run: docker run --rm ${{ env.IMAGE_NAME }}/unit-tester
+      - name: Unit Test
+        run: docker run --rm ${{ env.IMAGE_NAME }}/unit-tester
 
   release:
     if: ${{ github.ref == 'refs/heads/main' }}
