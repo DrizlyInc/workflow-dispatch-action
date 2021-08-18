@@ -8,17 +8,11 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.parse-version.outputs.version }}
+      release: ${{ steps.should-release.outputs.release }}
     steps:
 
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Parse Version From action.yml
-        id: parse-version
-        run: echo "::set-output name=version::$(cat action.yml | tail -1 | cut -d ':' -f4)"
-
-      - name: Ensure Version Available
-        run: .github/workflow-scripts/check-version-available.sh ${{ steps.parse-version.outputs.version }}
 
       - name: Create Lowercase Image Name
         run: echo IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
@@ -35,26 +29,38 @@ jobs:
       - name: Unit Test
         run: docker run --rm ${{ env.IMAGE_NAME }}/unit-tester
 
+      - name: Parse Version From action.yml
+        id: parse-version
+        run: echo "::set-output name=version::$(cat action.yml | tail -1 | cut -d ':' -f4)"
+
+      - name: Determine if a New Release is Needed
+        id: should-release
+        run: .github/workflow-scripts/should-release.sh ${{ steps.parse-version.outputs.version }}
+
   release:
-    if: ${{ github.ref == 'refs/heads/main' }}
+    # if: ${{ github.ref == 'refs/heads/main' && needs.validate.outputs.release == 'true' }}
+    if: ${{ needs.validate.outputs.release == 'true' }}
     needs: validate
     runs-on: ubuntu-latest
     steps:
 
-      - name: Checkout
-        uses: actions/checkout@v2
+      - name: test
+        run: echo "RELEASING"
 
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ needs.validate.outputs.version }}
+      # - name: Checkout
+      #   uses: actions/checkout@v2
 
-      - name: Build and Publish Image
-        uses: matootie/github-docker@v3.1.0
-        with:
-          accessToken: ${{ github.token }}
-          containerRegistry: true
-          tag: |
-            latest
-            ${{ needs.validate.outputs.version }}
-            ${{ github.sha }}
+      # - name: Release
+      #   uses: softprops/action-gh-release@v1
+      #   with:
+      #     tag_name: ${{ needs.validate.outputs.version }}
+
+      # - name: Build and Publish Image
+      #   uses: matootie/github-docker@v3.1.0
+      #   with:
+      #     accessToken: ${{ github.token }}
+      #     containerRegistry: true
+      #     tag: |
+      #       latest
+      #       ${{ needs.validate.outputs.version }}
+      #       ${{ github.sha }}
