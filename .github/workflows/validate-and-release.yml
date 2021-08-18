@@ -38,29 +38,25 @@ jobs:
         run: .github/workflow-scripts/should-release.sh ${{ steps.parse-version.outputs.version }}
 
   release:
-    # if: ${{ github.ref == 'refs/heads/main' && needs.validate.outputs.release == 'true' }}
-    if: ${{ needs.validate.outputs.release == 'true' }}
+    if: ${{ github.ref == 'refs/heads/main' && needs.validate.outputs.release == 'true' }}
     needs: validate
     runs-on: ubuntu-latest
     steps:
 
-      - name: test
-        run: echo "RELEASING"
+      - name: Checkout
+        uses: actions/checkout@v2
 
-      # - name: Checkout
-      #   uses: actions/checkout@v2
+      - name: Build and Publish Image
+        uses: matootie/github-docker@v3.1.0
+        with:
+          accessToken: ${{ github.token }}
+          containerRegistry: true
+          tag: |
+            latest
+            ${{ needs.validate.outputs.version }}
+            ${{ github.sha }}
 
-      # - name: Release
-      #   uses: softprops/action-gh-release@v1
-      #   with:
-      #     tag_name: ${{ needs.validate.outputs.version }}
-
-      # - name: Build and Publish Image
-      #   uses: matootie/github-docker@v3.1.0
-      #   with:
-      #     accessToken: ${{ github.token }}
-      #     containerRegistry: true
-      #     tag: |
-      #       latest
-      #       ${{ needs.validate.outputs.version }}
-      #       ${{ github.sha }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.validate.outputs.version }}

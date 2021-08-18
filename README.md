@@ -55,6 +55,10 @@ This action does three things:
 
 ```
 
+# Releasing
+
+To generate a new release of this action, simply update the version tag on the image designation at the end of the [action metadata file](./action.yml). The github workflow will automatically publish a new image and create a release upon merging to main.
+
 # License
 
 The contents of this repository are released under the [GNU General Public License v3.0](LICENSE)
