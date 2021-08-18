@@ -1,0 +1,57 @@
+name: Validate & Release
+
+on: push
+
+jobs:
+
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.parse-version.outputs.version }}
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Parse Version From action.yml
+        id: parse-version
+        run: echo "::set-output name=version::$(cat action.yml | tail -1 | cut -d ':' -f4)"
+
+      - name: Ensure Version Available
+        run: .github/workflow-scripts/check-version-available.sh ${{ steps.parse-version.outputs.version }}
+
+      - name: Create Lowercase Image Name
+        run: echo IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+
+      - name: build CI images
+        run: |
+          docker build --target builder -t ${{ env.IMAGE_NAME }}/builder . && \
+          docker build --target unit-tester -t ${{ env.IMAGE_NAME }}/unit-tester . && \
+          docker build --target linter -t ${{ env.IMAGE_NAME }}/linter .
+
+      - name: Lint
+        run: docker run --rm ${{ env.IMAGE_NAME }}/linter
+
+      - name: Unit Test
+        run: docker run --rm ${{ env.IMAGE_NAME }}/unit-tester
+
+  release:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.validate.outputs.version }}
+
+      - name: Build and Publish Image
+        uses: matootie/github-docker@v3.1.0
+        with:
+          accessToken: ${{ github.token }}
+          containerRegistry: true
+          tag: |
+            latest
+            ${{ needs.validate.outputs.version }}
+            ${{ github.sha }}
