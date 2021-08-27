@@ -42,7 +42,7 @@ func validate(client *github.Client, githubVars githubVars, inputs inputs) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	validateTargetWorkflowExistsOnDefaultBranch(ctx, client, githubVars, inputs)
+	validateTargetWorkflowExists(ctx, client, githubVars, inputs)
 }
 
 func createCheck(client *github.Client, githubVars githubVars, inputs inputs) *github.CheckRun {

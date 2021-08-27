@@ -59,7 +59,7 @@ func fetchCheckWithRetries(ctx context.Context, client *github.Client, githubVar
 
 }
 
-func validateTargetWorkflowExistsOnDefaultBranch(ctx context.Context, client *github.Client, githubVars githubVars, inputs inputs) {
+func validateTargetWorkflowExists(ctx context.Context, client *github.Client, githubVars githubVars, inputs inputs) {
 	targetRepository, _, fetchRepoErr := client.Repositories.Get(ctx, inputs.targetOwner, inputs.targetRepository)
 	if fetchRepoErr != nil {
 		githubactions.Fatalf("Failed to fetch target repository information: %v", fetchRepoErr.Error())
@@ -70,7 +70,6 @@ func validateTargetWorkflowExistsOnDefaultBranch(ctx context.Context, client *gi
 		Ref: *targetRepository.DefaultBranch,
 	})
 	if fetchDefaultBranchWorkflowErr != nil {
-
 		// https://github.com/DrizlyInc/distillery/blob/main/.github/workflows/tutorial00.yml
 		expectedFileUrl := fmt.Sprintf("%v/%v/%v/blob/%v/%v", githubVars.serverUrl, inputs.targetOwner, inputs.targetRepository, *targetRepository.DefaultBranch, workflowFilepath)
 		githubactions.Errorf("The target workflow must exist on the default branch of the target repository!")
@@ -90,5 +89,12 @@ func validateTargetWorkflowExistsOnDefaultBranch(ctx context.Context, client *gi
 			githubactions.Fatalf("Please add a dummy %v file to branch '%v' to 'register' the workflow with the GitHub API and try again!", workflowFilepath, *targetRepository.DefaultBranch)
 		}
 
+	} else {
+		_, _, _, fetchTargetBranchWorkflowErr := client.Repositories.GetContents(ctx, inputs.targetOwner, inputs.targetRepository, workflowFilepath, &github.RepositoryContentGetOptions{
+			Ref: inputs.targetRef,
+		})
+		if fetchTargetBranchWorkflowErr != nil {
+			githubactions.Fatalf("The target workflow must exist at the target ref!")
+		}
 	}
 }
