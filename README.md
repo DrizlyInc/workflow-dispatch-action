@@ -34,9 +34,9 @@ This action does three things:
     # the target_repository responding to the workflow_dispatch event
     workflow_filename: my-workflow
 
-    # If true, this action will wait until the check it creates is updated
+    # If false, this action will not wait until the check it creates is updated
     # to a completed status before exiting
-    wait_for_check: true
+    wait_for_check: false
 
     # Number of seconds to wait for the check before timing out (ignored if wait_for_check is false).
     # Inlcudes setup time to pull actions, etc
