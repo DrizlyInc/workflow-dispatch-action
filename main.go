@@ -16,7 +16,6 @@ func main() {
 	checkRun := createCheck(client, githubVars, inputs)
 	dispatchWorkflow(client, githubVars, inputs, checkRun)
 	waitForCheck(client, githubVars, inputs, checkRun)
-	scrapeOutputs(client, githubVars, int64(*checkRun.ID))
 }
 
 func initialize() (githubVars, inputs, *github.Client) {
@@ -118,12 +117,12 @@ func waitForCheck(client *github.Client, githubVars githubVars, inputs inputs, c
 		githubactions.Fatalf("Error waiting for check to finish: %v", err.Error())
 	}
 
-	if checkSucceeded {
-		githubactions.Infof("Check completed successfully!\n")
-	} else {
-		githubactions.Infof("Check failed!\n")
+	if !checkSucceeded {
+		githubactions.Fatalf("Check failed!\n")
 	}
 
+	githubactions.Infof("Check completed successfully!\n")
+	scrapeOutputs(client, githubVars, int64(*checkRun.ID))
 }
 
 func scrapeOutputs(client *github.Client, githubVars githubVars, checkId int64) {
