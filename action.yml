@@ -27,7 +27,7 @@ inputs:
 
   wait_for_check:
     required: false
-    default: false
+    default: true
     description: "Should the action wait for its check to finish? true | false"
 
   wait_timeout_seconds:
@@ -45,4 +45,4 @@ outputs:
 
 runs:
   using: docker
-  image: docker://ghcr.io/drizlyinc/workflow-dispatch-action:v0.1.3
+  image: docker://ghcr.io/drizlyinc/workflow-dispatch-action:v0.2.0

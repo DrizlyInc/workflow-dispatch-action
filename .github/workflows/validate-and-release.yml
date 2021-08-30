@@ -7,8 +7,8 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.parse-version.outputs.version }}
-      release: ${{ steps.should-release.outputs.release }}
+      version: ${{ steps.should-release.outputs.version }}
+      new-version: ${{ steps.should-release.outputs.new-version }}
     steps:
 
       - name: Checkout
@@ -33,12 +33,16 @@ jobs:
         id: parse-version
         run: echo "::set-output name=version::$(cat action.yml | tail -1 | cut -d ':' -f4)"
 
-      - name: Determine if a New Release is Needed
+      - name: Determine if a new release is needed
+        uses: DrizlyInc/version-check-action@v0.3.0
         id: should-release
-        run: .github/workflow-scripts/should-release.sh ${{ steps.parse-version.outputs.version }}
+        with:
+          version: ${{ steps.parse-version.outputs.version }}
+          username: ${{ github.actor }}
+          token: ${{ github.token }}
 
   release:
-    if: ${{ github.ref == 'refs/heads/main' && needs.validate.outputs.release == 'true' }}
+    if: ${{ github.ref == 'refs/heads/main' && needs.validate.outputs.new-version == 'true' }}
     needs: validate
     runs-on: ubuntu-latest
     steps:

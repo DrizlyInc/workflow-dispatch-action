@@ -13,10 +13,10 @@ import (
 
 func main() {
 	githubVars, inputs, client := initialize()
+	validate(client, githubVars, inputs)
 	checkRun := createCheck(client, githubVars, inputs)
 	dispatchWorkflow(client, githubVars, inputs, checkRun)
 	waitForCheck(client, githubVars, inputs, checkRun)
-	scrapeOutputs(client, githubVars, int64(*checkRun.ID))
 }
 
 func initialize() (githubVars, inputs, *github.Client) {
@@ -36,6 +36,13 @@ func initialize() (githubVars, inputs, *github.Client) {
 	}
 
 	return githubVars, inputs, client
+}
+
+func validate(client *github.Client, githubVars githubVars, inputs inputs) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	validateTargetWorkflowExists(ctx, client, githubVars, inputs)
 }
 
 func createCheck(client *github.Client, githubVars githubVars, inputs inputs) *github.CheckRun {
@@ -83,15 +90,10 @@ func dispatchWorkflow(client *github.Client, githubVars githubVars, inputs input
 	}
 	githubactions.Infof("Complete workflow inputs: %v\n", string(rawInputs))
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
-	validateTargetWorkflowExistsOnDefaultBranch(ctx, client, githubVars, inputs)
-
 	fullWorkflowFilename := fmt.Sprintf("%s.yml", inputs.workflowFilename)
 	githubactions.Infof("Dispatching to %v workflow in %v/%v@%v\n", fullWorkflowFilename, inputs.targetOwner, inputs.targetRepository, inputs.targetRef)
 
-	ctx, cancel = context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
 	_, err = client.Actions.CreateWorkflowDispatchEventByFileName(ctx, inputs.targetOwner, inputs.targetRepository, fullWorkflowFilename, github.CreateWorkflowDispatchEventRequest{
@@ -118,12 +120,12 @@ func waitForCheck(client *github.Client, githubVars githubVars, inputs inputs, c
 		githubactions.Fatalf("Error waiting for check to finish: %v", err.Error())
 	}
 
-	if checkSucceeded {
-		githubactions.Infof("Check completed successfully!\n")
-	} else {
-		githubactions.Infof("Check failed!\n")
+	if !checkSucceeded {
+		githubactions.Fatalf("Check failed!\n")
 	}
 
+	githubactions.Infof("Check completed successfully!\n")
+	scrapeOutputs(client, githubVars, int64(*checkRun.ID))
 }
 
 func scrapeOutputs(client *github.Client, githubVars githubVars, checkId int64) {
