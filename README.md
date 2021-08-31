@@ -40,7 +40,7 @@ This action does three things:
 
     # Number of seconds to wait for the check before timing out (ignored if wait_for_check is false).
     # Inlcudes setup time to pull actions, etc
-    wait_timeout_seconds: 60
+    wait_timeout_seconds: 120
 
     # Inputs to pass to the workflow, must be a JSON encoded string ex. '{ "myinput":"myvalue" }'
     # Three additional fields are automatically added to the inputs prior to dispatching:
