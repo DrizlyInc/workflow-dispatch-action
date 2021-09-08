@@ -148,7 +148,7 @@ func (client *GitHubClient) CompleteCheckAsFailure(ctx context.Context, checkRun
 	apiTimeoutCtx, cancel := context.WithTimeout(ctx, client.apiTimeoutDuration)
 	defer cancel()
 
-	client.api.Checks.UpdateCheckRun(apiTimeoutCtx, client.githubVars.repositoryOwner, client.githubVars.repositoryName, *checkRun.ID, github.UpdateCheckRunOptions{
+	_, _, err := client.api.Checks.UpdateCheckRun(apiTimeoutCtx, client.githubVars.repositoryOwner, client.githubVars.repositoryName, *checkRun.ID, github.UpdateCheckRunOptions{
 		Status: github.String("completed"),
 		Conclusion: github.String("failure"),
 		CompletedAt: &github.Timestamp{
@@ -158,6 +158,10 @@ func (client *GitHubClient) CompleteCheckAsFailure(ctx context.Context, checkRun
 			Summary: github.String(reason),
 		},
 	})
+	if err != nil {
+		githubactions.Errorf(reason)
+		githubactions.Fatalf("Error marking check failed after dispatch error: %v", err.Error())
+	}
 }
 
 func (client *GitHubClient) FetchCheckWithRetries(ctx context.Context, checkId int64) (*github.CheckRun, error) {
