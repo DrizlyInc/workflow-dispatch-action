@@ -16,18 +16,13 @@ func pollForCheckCompletion(ctx context.Context, client *GitHubClient, checkId i
 	// loop forever (we handle breaking out later)
 	for {
 
-		secondsRemainingUntilTimeout := getSecondsRemaining(ctx)
-		githubactions.Infof("    Fetching check status (%.2fs remaining)... ", secondsRemainingUntilTimeout)
-
-		apiTimeoutCtx, cancel := context.WithTimeout(ctx, time.Second*10)
-		defer cancel()
-
-		check, err := client.FetchCheckWithRetries(apiTimeoutCtx, checkId)
+		check, err := client.FetchCheckWithRetries(ctx, checkId)
 		if err != nil {
-			githubactions.Infof("FAILED\n")
 			return false, fmt.Errorf("Error fetching check %v: %w", checkId, err)
 		}
-		githubactions.Infof("%v\n", *check.Status)
+
+		secondsRemainingUntilTimeout := getSecondsRemaining(ctx)
+		githubactions.Infof("    Check status ... %v ... (%.2fs until timeout)", *check.Status, secondsRemainingUntilTimeout)
 
 		if *check.Status == "completed" {
 			return *check.Conclusion == "success", nil

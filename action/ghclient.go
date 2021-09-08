@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -154,18 +153,16 @@ func (client *GitHubClient) FetchCheckWithRetries(ctx context.Context, checkId i
 
 		if err != nil {
 			githubactions.Warningf("Error fetching check %v (attempt %v of %v): %v", checkId, attempts, maxAttempts, err.Error())
+			if attempts == maxAttempts {
+				return nil, fmt.Errorf("Exceeded max attempts fetching check %v: %w", checkId, err)
+			} else if ctx.Err() != nil {
+				return nil, err
+			}
 			time.Sleep(time.Second * time.Duration(secondsBetweenAttempts))
 		} else {
 			return check, nil
 		}
 
-		if attempts == maxAttempts {
-			return nil, fmt.Errorf("Exceeded max attempts fetching check %v: %w", checkId, err)
-		}
-
-		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, fmt.Errorf("Timed out waiting for check completion")
-		}
 	}
 
 }
