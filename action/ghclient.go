@@ -152,17 +152,19 @@ func (client *GitHubClient) FetchCheckWithRetries(ctx context.Context, checkId i
 		attempts += 1
 
 		if err != nil {
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
+
 			githubactions.Warningf("Error fetching check %v (attempt %v of %v): %v", checkId, attempts, maxAttempts, err.Error())
 			if attempts == maxAttempts {
-				return nil, fmt.Errorf("Exceeded max attempts fetching check %v: %w", checkId, err)
-			} else if ctx.Err() != nil {
-				return nil, err
+				return nil, fmt.Errorf("Exceeded max attempts fetching check %v!", checkId)
 			}
+
 			time.Sleep(time.Second * time.Duration(secondsBetweenAttempts))
 		} else {
 			return check, nil
 		}
-
 	}
 
 }
