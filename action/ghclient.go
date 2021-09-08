@@ -126,7 +126,7 @@ func (client *GitHubClient) CreateCheck(ctx context.Context) *github.CheckRun {
 func (client *GitHubClient) DispatchWorkflow(ctx context.Context, checkRun *github.CheckRun) {
 	addDefaultWorkflowInputs(&client.inputs, client.githubVars, checkRun)
 
-	fullWorkflowFilename := fmt.Sprintf("%s.yml2", client.inputs.workflowFilename)
+	fullWorkflowFilename := fmt.Sprintf("%s.yml", client.inputs.workflowFilename)
 	githubactions.Infof("Dispatching to %v workflow in %v/%v@%v\n", fullWorkflowFilename, client.inputs.targetOwner, client.inputs.targetRepository, client.inputs.targetRef)
 
 	apiTimeoutCtx, cancel := context.WithTimeout(ctx, client.apiTimeoutDuration)
