@@ -22,7 +22,7 @@ func pollForCheckCompletion(ctx context.Context, client *GitHubClient, checkId i
 		}
 
 		secondsRemainingUntilTimeout := getSecondsRemaining(ctx)
-		githubactions.Infof("    Check status ... %v ... (%.2fs until timeout)", *check.Status, secondsRemainingUntilTimeout)
+		githubactions.Infof("    Check status ... %v ... (%.2fs until timeout)\n", *check.Status, secondsRemainingUntilTimeout)
 
 		if *check.Status == "completed" {
 			return *check.Conclusion == "success", nil
