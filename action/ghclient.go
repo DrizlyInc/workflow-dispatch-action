@@ -149,14 +149,14 @@ func (client *GitHubClient) CompleteCheckAsFailure(ctx context.Context, checkRun
 	defer cancel()
 
 	_, _, err := client.api.Checks.UpdateCheckRun(apiTimeoutCtx, client.githubVars.repositoryOwner, client.githubVars.repositoryName, *checkRun.ID, github.UpdateCheckRunOptions{
-		Name: checkRun.GetName(),
-		Status: github.String("completed"),
+		Name:       checkRun.GetName(),
+		Status:     github.String("completed"),
 		Conclusion: github.String("failure"),
 		CompletedAt: &github.Timestamp{
 			Time: time.Now(),
 		},
 		Output: &github.CheckRunOutput{
-			Title: github.String(checkRun.Output.GetTitle()),
+			Title:   github.String(checkRun.Output.GetTitle()),
 			Summary: github.String(reason),
 		},
 	})
