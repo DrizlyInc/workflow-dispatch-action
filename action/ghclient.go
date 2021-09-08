@@ -49,9 +49,9 @@ func NewGitHubClient(githubVars githubVars, inputs inputs) *GitHubClient {
 
 func (client *GitHubClient) ValidateTargetWorkflowExists(ctx context.Context) {
 	workflowFilepath := fmt.Sprintf(".github/workflows/%v.yml", client.inputs.workflowFilename)
-	defaultBranch := client.GetTargetRepositoryDefaultBranch(ctx)
+	defaultBranch := *client.GetTargetRepositoryDefaultBranch(ctx)
 
-	workflowExistsOnDefaultBranch := client.CheckIfFileExistsAtRef(ctx, client.inputs.targetOwner, client.inputs.targetRepository, workflowFilepath, *defaultBranch)
+	workflowExistsOnDefaultBranch := client.CheckIfFileExistsAtRef(ctx, client.inputs.targetOwner, client.inputs.targetRepository, workflowFilepath, defaultBranch)
 	workflowExistsOnTargetBranch := client.CheckIfFileExistsAtRef(ctx, client.inputs.targetOwner, client.inputs.targetRepository, workflowFilepath, client.inputs.targetRef)
 
 	if !workflowExistsOnDefaultBranch || !workflowExistsOnTargetBranch {
