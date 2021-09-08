@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/google/go-github/v37/github"
@@ -12,14 +9,18 @@ import (
 )
 
 func main() {
-	githubVars, inputs, client := initialize()
-	validate(client, githubVars, inputs)
-	checkRun := createCheck(client, githubVars, inputs)
-	dispatchWorkflow(client, githubVars, inputs, checkRun)
-	waitForCheck(client, githubVars, inputs, checkRun)
+	client := initializeGithubClient()
+
+	client.ValidateTargetWorkflowExists(context.Background())
+
+	checkRun := client.CreateCheck(context.Background())
+
+	client.DispatchWorkflow(context.Background(), checkRun)
+
+	waitForCheckCompletion(client, checkRun)
 }
 
-func initialize() (githubVars, inputs, *github.Client) {
+func initializeGithubClient() *GitHubClient {
 	githubVars, err := parseGithubVars()
 	if err != nil {
 		githubactions.Fatalf("%v", err.Error())
@@ -30,92 +31,21 @@ func initialize() (githubVars, inputs, *github.Client) {
 		githubactions.Fatalf("%v", err.Error())
 	}
 
-	client, err := newGithubClient(http.DefaultTransport, githubVars, inputs)
-	if err != nil {
-		githubactions.Fatalf("Error constructing new Github Client: %v", err)
-	}
+	client := NewGitHubClient(githubVars, inputs)
 
-	return githubVars, inputs, client
+	return client
 }
 
-func validate(client *github.Client, githubVars githubVars, inputs inputs) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
-	validateTargetWorkflowExists(ctx, client, githubVars, inputs)
-}
-
-func createCheck(client *github.Client, githubVars githubVars, inputs inputs) *github.CheckRun {
-	detailsUrl := fmt.Sprintf("%s/%s/%s/actions", githubVars.serverUrl, inputs.targetOwner, inputs.targetRepository)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
-	checkRun, _, err := client.Checks.CreateCheckRun(ctx, githubVars.repositoryOwner, githubVars.repositoryName, github.CreateCheckRunOptions{
-		Name:       inputs.workflowFilename,
-		HeadSHA:    githubVars.sha,
-		DetailsURL: &detailsUrl,
-		Status:     github.String("queued"),
-		StartedAt: &github.Timestamp{
-			Time: time.Now(),
-		},
-		Output: &github.CheckRunOutput{
-			Title:   github.String(inputs.workflowFilename),
-			Summary: github.String("This report will be populated by the triggered workflow"),
-		},
-	})
-
-	if err != nil {
-		githubactions.Fatalf("Error creating check: %v", err.Error())
-	}
-
-	if checkRun.ID == nil {
-		githubactions.Fatalf("CreateCheckRun did not return a check ID. Exiting.")
-	}
-
-	githubactions.Infof("Created new check here: %s\n", *checkRun.HTMLURL)
-
-	return checkRun
-}
-
-func dispatchWorkflow(client *github.Client, githubVars githubVars, inputs inputs, checkRun *github.CheckRun) {
-	// Add default inputs to those provided by the user
-	inputs.workflowInputs["github_repository"] = githubVars.repository
-	inputs.workflowInputs["github_sha"] = githubVars.sha
-	inputs.workflowInputs["check_id"] = fmt.Sprint(*checkRun.ID)
-
-	rawInputs, err := json.Marshal(inputs.workflowInputs)
-	if err != nil {
-		githubactions.Fatalf("Error unmarshaling workflow_inputs: %v", err.Error())
-	}
-	githubactions.Infof("Complete workflow inputs: %v\n", string(rawInputs))
-
-	fullWorkflowFilename := fmt.Sprintf("%s.yml", inputs.workflowFilename)
-	githubactions.Infof("Dispatching to %v workflow in %v/%v@%v\n", fullWorkflowFilename, inputs.targetOwner, inputs.targetRepository, inputs.targetRef)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
-	_, err = client.Actions.CreateWorkflowDispatchEventByFileName(ctx, inputs.targetOwner, inputs.targetRepository, fullWorkflowFilename, github.CreateWorkflowDispatchEventRequest{
-		Ref:    inputs.targetRef,
-		Inputs: inputs.workflowInputs,
-	})
-
-	if err != nil {
-		githubactions.Fatalf("Error disptaching event: %v", err.Error())
-	}
-}
-
-func waitForCheck(client *github.Client, githubVars githubVars, inputs inputs, checkRun *github.CheckRun) {
-	if !inputs.waitForCheck {
+func waitForCheckCompletion(client *GitHubClient, checkRun *github.CheckRun) {
+	if !client.inputs.waitForCheck {
 		githubactions.Infof("wait_for_check was false, proceeding\n")
 		return
 	}
 
-	checkTimeoutCtx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(inputs.waitTimeoutSeconds))
+	checkTimeoutCtx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(client.inputs.waitTimeoutSeconds))
 	defer cancel()
 
-	checkSucceeded, err := pollForCheckCompletion(checkTimeoutCtx, client, githubVars, inputs, int(*checkRun.ID))
+	checkSucceeded, err := pollForCheckCompletion(checkTimeoutCtx, client, *checkRun.ID)
 	if err != nil {
 		githubactions.Fatalf("Error waiting for check to finish: %v", err.Error())
 	}
@@ -125,15 +55,15 @@ func waitForCheck(client *github.Client, githubVars githubVars, inputs inputs, c
 	}
 
 	githubactions.Infof("Check completed successfully!\n")
-	scrapeOutputs(client, githubVars, int64(*checkRun.ID))
+	scrapeOutputs(client, *checkRun.ID)
 }
 
-func scrapeOutputs(client *github.Client, githubVars githubVars, checkId int64) {
+func scrapeOutputs(client *GitHubClient, checkId int64) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	check, err := fetchCheckWithRetries(ctx, client, githubVars, int(checkId))
+	check, err := client.FetchCheckWithRetries(ctx, checkId)
 	if err != nil {
 		githubactions.Fatalf("Error fetching check for output scraping: %v", err.Error())
 	}

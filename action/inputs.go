@@ -10,6 +10,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/google/go-github/v37/github"
+	"github.com/sethvargo/go-githubactions"
 )
 
 type inputs struct {
@@ -108,4 +111,17 @@ func parseInputs() (inputs, error) {
 		waitTimeoutSeconds: waitTimeoutSeconds,
 		workflowInputs:     workflowInputs,
 	}, nil
+}
+
+func addDefaultWorkflowInputs(inputs *inputs, githubVars githubVars, checkRun *github.CheckRun) {
+	// Add default inputs to those provided by the user
+	inputs.workflowInputs["github_repository"] = githubVars.repository
+	inputs.workflowInputs["github_sha"] = githubVars.sha
+	inputs.workflowInputs["check_id"] = fmt.Sprint(*checkRun.ID)
+
+	rawInputs, err := json.Marshal(inputs.workflowInputs)
+	if err != nil {
+		githubactions.Fatalf("Error unmarshaling workflow_inputs: %v", err.Error())
+	}
+	githubactions.Infof("Complete workflow inputs: %v\n", string(rawInputs))
 }
