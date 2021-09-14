@@ -31,9 +31,7 @@ func initializeGithubClient() *GitHubClient {
 		githubactions.Fatalf("%v", err.Error())
 	}
 
-	client := NewGitHubClient(githubVars, inputs)
-
-	return client
+	return NewGitHubClient(githubVars, inputs)
 }
 
 func waitForCheckCompletion(client *GitHubClient, checkRun *github.CheckRun) {
