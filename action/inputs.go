@@ -40,7 +40,7 @@ func parseInputs() (inputs, error) {
 	}
 
 	installationId := int64(-1)
-	installationIdString, _ := os.LookupEnv("APP_INSTALLATION_ID")
+	installationIdString, ok := os.LookupEnv("APP_INSTALLATION_ID")
 	if ok {
 		installationId, err = strconv.ParseInt(installationIdString, 10, 64)
 		if err != nil {
