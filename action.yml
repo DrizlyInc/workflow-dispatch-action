@@ -45,4 +45,5 @@ outputs:
 
 runs:
   using: docker
-  image: docker://ghcr.io/drizlyinc/workflow-dispatch-action:v0.2.1
+  image: Dockerfile
+  # image: docker://ghcr.io/drizlyinc/workflow-dispatch-action:v0.2.1
