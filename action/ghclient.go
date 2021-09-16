@@ -29,7 +29,7 @@ func NewGitHubClient(githubVars githubVars, inputs inputs) *GitHubClient {
 
 	// Get the list of installations
 	var allInstallations []*github.Installation
-	opt :=  &github.ListOptions{
+	opt := &github.ListOptions{
 		PerPage: 100,
 	}
 	for {
@@ -59,7 +59,6 @@ func NewGitHubClient(githubVars githubVars, inputs inputs) *GitHubClient {
 			githubactions.Fatalf("No installation with ID %d found", inputs.installationId)
 		}
 	}
-
 
 	return &GitHubClient{
 		api:                github.NewClient(&http.Client{Transport: installationTransport}),
