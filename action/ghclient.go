@@ -27,17 +27,39 @@ func NewGitHubClient(githubVars githubVars, inputs inputs) *GitHubClient {
 	// use appTransport to generate a client
 	client := github.NewClient(&http.Client{Transport: appTransport})
 
-	// We only need 1 installation since the app we are interested in only exists
-	// in the context of its 1 installation to our org/repo
-	appInstallations, _, err := client.Apps.ListInstallations(context.Background(), &github.ListOptions{
-		PerPage: 1,
-	})
-	if err != nil {
-		githubactions.Fatalf("Error constructing new Github Client: %v", err.Error())
+	// Get the list of installations
+	var allInstallations []*github.Installation
+	opt :=  &github.ListOptions{
+		PerPage: 100,
+	}
+	for {
+		installations, resp, err := client.Apps.ListInstallations(context.Background(), opt)
+		if err != nil {
+			githubactions.Fatalf("Error constructing new Github Client: %v", err.Error())
+		}
+		allInstallations = append(allInstallations, installations...)
+		if resp.NextPage == 0 {
+			break
+		}
+		opt.Page = resp.NextPage
 	}
 
-	// Take the first (only) installation we fetched
-	installationTransport := ghinstallation.NewFromAppsTransport(appTransport, *appInstallations[0].ID)
+	var installationTransport *ghinstallation.Transport
+	if inputs.installationId == -1 {
+		// Take the first installation we fetched if none specified
+		installationTransport = ghinstallation.NewFromAppsTransport(appTransport, *allInstallations[0].ID)
+	} else {
+		for _, installation := range allInstallations {
+			if *installation.ID == inputs.installationId {
+				installationTransport = ghinstallation.NewFromAppsTransport(appTransport, *installation.ID)
+				break
+			}
+		}
+		if installationTransport == nil {
+			githubactions.Fatalf("No installation with ID %d found", inputs.installationId)
+		}
+	}
+
 
 	return &GitHubClient{
 		api:                github.NewClient(&http.Client{Transport: installationTransport}),

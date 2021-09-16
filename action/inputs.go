@@ -24,6 +24,7 @@ type inputs struct {
 	workflowFilename   string
 	waitForCheck       bool
 	waitTimeoutSeconds int64
+	installationId     int64
 	workflowInputs     map[string]interface{}
 }
 
@@ -36,6 +37,15 @@ func parseInputs() (inputs, error) {
 	appID, err := strconv.ParseInt(appIDString, 10, 64)
 	if err != nil {
 		return inputs{}, errors.New("input 'app_id' must be an integer")
+	}
+
+	installationId := int64(-1)
+	installationIdString, _ := os.LookupEnv("APP_INSTALLATION_ID")
+	if ok {
+		installationId, err = strconv.ParseInt(installationIdString, 10, 64)
+		if err != nil {
+			return inputs{}, errors.New("APP_INSTALLATION_ID must be an integer")
+		}
 	}
 
 	privateKeyString, ok := os.LookupEnv("INPUT_PRIVATE_KEY")
@@ -110,6 +120,7 @@ func parseInputs() (inputs, error) {
 		waitForCheck:       waitForCheck,
 		waitTimeoutSeconds: waitTimeoutSeconds,
 		workflowInputs:     workflowInputs,
+		installationId:     installationId,
 	}, nil
 }
 
