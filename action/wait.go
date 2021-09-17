@@ -10,6 +10,8 @@ import (
 
 const secondsBetweenChecks = 5
 
+// pollForCheckCompletion polls the GitHub api until the given check has
+// a status of "completed" or the timeout specified by the user is reached.
 func pollForCheckCompletion(ctx context.Context, client *GitHubClient, checkId int64) (bool, error) {
 	githubactions.Infof("Waiting for check %v to complete (%vs timeout) ...\n", checkId, client.inputs.waitTimeoutSeconds)
 
@@ -40,6 +42,8 @@ func pollForCheckCompletion(ctx context.Context, client *GitHubClient, checkId i
 	}
 }
 
+// getSecondsRemaining returns the number of seconds remaining
+// until a given context reaches its timeout
 func getSecondsRemaining(ctx context.Context) float64 {
 	deadline, _ := ctx.Deadline()
 	timeRemaining := deadline.Sub(time.Now())

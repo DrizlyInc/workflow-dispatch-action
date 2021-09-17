@@ -124,6 +124,9 @@ func parseInputs() (inputs, error) {
 	}, nil
 }
 
+// addDefaultWorkflowInputs adds a standard set of variables to the inputs
+// which will be set as part of the workflow_dispatch request. These are given
+// in addition to those specified as input by the user
 func addDefaultWorkflowInputs(inputs *inputs, githubVars githubVars, checkRun *github.CheckRun) {
 	// Add default inputs to those provided by the user
 	inputs.workflowInputs["github_repository"] = githubVars.repository

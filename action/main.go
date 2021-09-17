@@ -20,6 +20,9 @@ func main() {
 	waitForCheckCompletion(client, checkRun)
 }
 
+// initializeGithubClient parses environment variables (user inputs and
+// standard GitHub variables) then uses those to construct and return
+// a GitHub api client
 func initializeGithubClient() *GitHubClient {
 	githubVars, err := parseGithubVars()
 	if err != nil {
@@ -34,6 +37,8 @@ func initializeGithubClient() *GitHubClient {
 	return NewGitHubClient(githubVars, inputs)
 }
 
+// waitForCheckCompletion waits for the given checkRun to update to a status
+// of "completed" with a timeout specified as input by the user
 func waitForCheckCompletion(client *GitHubClient, checkRun *github.CheckRun) {
 	if !client.inputs.waitForCheck {
 		githubactions.Infof("wait_for_check was false, proceeding\n")
@@ -56,6 +61,9 @@ func waitForCheckCompletion(client *GitHubClient, checkRun *github.CheckRun) {
 	scrapeOutputs(client, *checkRun.ID)
 }
 
+// scrapeOutputs fetches the check from the repository and reads the report
+// to get any outputs written as json to the end of the report. It then sets
+// that json content as an output named "output" for this action
 func scrapeOutputs(client *GitHubClient, checkId int64) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)

@@ -18,6 +18,8 @@ type GitHubClient struct {
 	inputs             inputs
 }
 
+// NewGitHubClient creates an api client for interaction with GitHub
+// using an app installation transport
 func NewGitHubClient(githubVars githubVars, inputs inputs) *GitHubClient {
 	// https://github.com/google/go-github#authentication
 	// First, create an AppsTransport for initial auth
@@ -46,7 +48,11 @@ func NewGitHubClient(githubVars githubVars, inputs inputs) *GitHubClient {
 
 	var installationTransport *ghinstallation.Transport
 	if inputs.installationId == -1 {
-		// Take the first installation we fetched if none specified
+		// Take the first installation we fetched if none specified. This behavior
+		// is fine in circumstances where the GitHub app being used for authentication
+		// only has one installation. If the app is re-used (installed to multiple organizations or repos)
+		// then a specific installation ID must be given identifying which installation
+		// has the required permissions.
 		installationTransport = ghinstallation.NewFromAppsTransport(appTransport, *allInstallations[0].ID)
 	} else {
 		for _, installation := range allInstallations {
@@ -68,6 +74,9 @@ func NewGitHubClient(githubVars githubVars, inputs inputs) *GitHubClient {
 	}
 }
 
+// ValidateTargetWorkflowExists checks that the workflow to be triggered,
+// as specified by the inputs, exists at the required refs on the target
+// repository and exits with an error message if not
 func (client *GitHubClient) ValidateTargetWorkflowExists(ctx context.Context) {
 	workflowFilepath := fmt.Sprintf(".github/workflows/%v.yml", client.inputs.workflowFilename)
 	defaultBranch := *client.GetTargetRepositoryDefaultBranch(ctx)
@@ -88,6 +97,8 @@ func (client *GitHubClient) ValidateTargetWorkflowExists(ctx context.Context) {
 	}
 }
 
+// GetTargetRepositoryDefaultBranch returns the name of the default branch
+// on the target repository specified by the inputs
 func (client *GitHubClient) GetTargetRepositoryDefaultBranch(ctx context.Context) *string {
 	apiTimeoutCtx, cancel := context.WithTimeout(ctx, client.apiTimeoutDuration)
 	defer cancel()
@@ -100,6 +111,8 @@ func (client *GitHubClient) GetTargetRepositoryDefaultBranch(ctx context.Context
 	return targetRepo.DefaultBranch
 }
 
+// CheckIfFileExistsAtRef returns a boolean indiciating whether or not a
+// repository contains a file at a specific ref
 func (client *GitHubClient) CheckIfFileExistsAtRef(ctx context.Context, owner, repository, filepath, ref string) bool {
 	apiTimeoutCtx, cancel := context.WithTimeout(ctx, client.apiTimeoutDuration)
 	defer cancel()
@@ -111,6 +124,8 @@ func (client *GitHubClient) CheckIfFileExistsAtRef(ctx context.Context, owner, r
 	return err == nil
 }
 
+// CreateCheck creates a "queued" check on the repository using this action
+// to perform a workflow dispatch.
 func (client *GitHubClient) CreateCheck(ctx context.Context) *github.CheckRun {
 	detailsUrl := fmt.Sprintf("%s/%s/%s/actions", client.githubVars.serverUrl, client.inputs.targetOwner, client.inputs.targetRepository)
 
@@ -144,6 +159,8 @@ func (client *GitHubClient) CreateCheck(ctx context.Context) *github.CheckRun {
 	return checkRun
 }
 
+// DispatchWorkflow sends a workflow_dispatch event to the target repository
+// and ref using the GitHub api
 func (client *GitHubClient) DispatchWorkflow(ctx context.Context, checkRun *github.CheckRun) {
 	addDefaultWorkflowInputs(&client.inputs, client.githubVars, checkRun)
 
@@ -165,6 +182,8 @@ func (client *GitHubClient) DispatchWorkflow(ctx context.Context, checkRun *gith
 	}
 }
 
+// CompleteCheckAsFailure updates the status of a GitHub check to "failure",
+// providing the given "reason" as the summary of the check
 func (client *GitHubClient) CompleteCheckAsFailure(ctx context.Context, checkRun *github.CheckRun, reason string) {
 	apiTimeoutCtx, cancel := context.WithTimeout(ctx, client.apiTimeoutDuration)
 	defer cancel()
@@ -187,6 +206,10 @@ func (client *GitHubClient) CompleteCheckAsFailure(ctx context.Context, checkRun
 	}
 }
 
+// FetchCheckWithRetries retrieves an existing check from the repository
+// using this action to send a workflow dispatch. This method retries the api
+// call up to a maximum number of attempts with delays in-between in order
+// to overcome the eventual consistency delays with the GitHub api.
 func (client *GitHubClient) FetchCheckWithRetries(ctx context.Context, checkId int64) (*github.CheckRun, error) {
 	secondsBetweenAttempts := 1
 	maxAttempts := 4
@@ -214,6 +237,8 @@ func (client *GitHubClient) FetchCheckWithRetries(ctx context.Context, checkId i
 
 }
 
+// FetchCheck performs a single GetCheckRun call against the GitHub api
+// to get an existing check from the repository using this action.
 func (client *GitHubClient) FetchCheck(ctx context.Context, githubVars githubVars, checkId int64) (*github.CheckRun, error) {
 
 	apiTimeoutCtx, cancel := context.WithTimeout(ctx, client.apiTimeoutDuration)
