@@ -6,12 +6,12 @@ ENV GO111MODULE=on
 ENV GOOS=linux
 
 #  Get dependencies before build
-COPY go.mod go.sum ./
+COPY action/go.mod action/go.sum ./
 # RUN --mount=type=cache,target=$GOPATH/pkg/mod go mod download
 RUN go mod download
 
 # Build binary
-COPY . .
+COPY action/. .
 RUN go build -o app
 
 FROM builder AS linter

@@ -17,8 +17,6 @@ This action does three things:
 
     # App ID for a GitHub app with write permissions to the dispatching repository
     # and target repository (for triggering workflows and writing creating checks)
-    # NOTE: This action assumes the given GitHub app only has a single installation
-    # and that installation will provide the required permissions
     app_id: ${{ secrets.MY_APP_ID }}
 
     # Private key for the GitHub app id provided
@@ -52,6 +50,12 @@ This action does three things:
         "variable": "foo_bar",
         "my_cool_num": "2"
       }
+
+  env:
+    # Optional, can be used to inform the action which installation of the given app_id and private_key
+    # to use. If not provided, the action will assume only one installation exists and use the first one
+    # it finds (this should be the case in most circumstances).
+    APP_INSTALLATION_ID: 18419284
 
 ```
 

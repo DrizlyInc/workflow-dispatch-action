@@ -5,30 +5,26 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/go-github/v37/github"
 	"github.com/sethvargo/go-githubactions"
 )
 
 const secondsBetweenChecks = 5
 
-func pollForCheckCompletion(ctx context.Context, client *github.Client, githubVars githubVars, inputs inputs, checkId int) (bool, error) {
-	githubactions.Infof("Waiting for check %v to complete (%vs timeout) ...\n", checkId, inputs.waitTimeoutSeconds)
+// pollForCheckCompletion polls the GitHub api until the given check has
+// a status of "completed" or the timeout specified by the user is reached.
+func pollForCheckCompletion(ctx context.Context, client *GitHubClient, checkId int64) (bool, error) {
+	githubactions.Infof("Waiting for check %v to complete (%vs timeout) ...\n", checkId, client.inputs.waitTimeoutSeconds)
 
 	// loop forever (we handle breaking out later)
 	for {
 
-		secondsRemainingUntilTimeout := getSecondsRemaining(ctx)
-		githubactions.Infof("    Fetching check status (%.2fs remaining)... ", secondsRemainingUntilTimeout)
-
-		apiTimeoutCtx, cancel := context.WithTimeout(ctx, time.Second*10)
-		defer cancel()
-
-		check, err := fetchCheckWithRetries(apiTimeoutCtx, client, githubVars, checkId)
+		check, err := client.FetchCheckWithRetries(ctx, checkId)
 		if err != nil {
-			githubactions.Infof("FAILED\n")
 			return false, fmt.Errorf("Error fetching check %v: %w", checkId, err)
 		}
-		githubactions.Infof("%v\n", *check.Status)
+
+		secondsRemainingUntilTimeout := getSecondsRemaining(ctx)
+		githubactions.Infof("    Check status (%.1fs remaining) ... %v\n", secondsRemainingUntilTimeout, *check.Status)
 
 		if *check.Status == "completed" {
 			return *check.Conclusion == "success", nil
@@ -46,6 +42,8 @@ func pollForCheckCompletion(ctx context.Context, client *github.Client, githubVa
 	}
 }
 
+// getSecondsRemaining returns the number of seconds remaining
+// until a given context reaches its timeout
 func getSecondsRemaining(ctx context.Context) float64 {
 	deadline, _ := ctx.Deadline()
 	timeRemaining := deadline.Sub(time.Now())
