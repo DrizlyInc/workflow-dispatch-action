@@ -11,6 +11,17 @@ This action does three things:
 
 # Usage
 
+## From the Sending Workflow
+
+### Permissions
+
+The workflow must have access to a GitHub app with `{ contents: write, checks: write }` permissions on the source and destination repositories.
+
+
+### Configuration
+
+This example calls a remote workflow (`.github/workflows/my-workflow.yml` in the `main` branch of `example-username/example-repository`) with parameters `variable` and `my_cool_num`.  It then waits up to `60` seconds for the remote workflow to complete before continuing.
+
 ```yaml
 - uses: DrizlyInc/workflow-dispatch-action@v0.1.0
   with:
@@ -58,6 +69,49 @@ This action does three things:
     APP_INSTALLATION_ID: 18419284
 
 ```
+
+## From the Receiving Workflow
+
+### Permissions
+
+The receiving workflow _must_ have access to a GitHub app with `{ contents: write, checks: write }` permissions on the source and destination repositories.
+
+
+### Configuration 
+
+Each workflow triggered by `workflow-dispatch-action` _must_ specify [`workflow_dispatch`](https://docs.github.com/en/actions/reference/events-that-trigger-workflows#workflow_dispatch) as a triggering event.  It _must_ also declare the following inputs, in addition to any that are specific to the workflow itself.
+
+```yaml
+on:
+  workflow_dispatch:
+    inputs:
+      check_id:
+        description: The id of the check which this workflow should update
+        required: true
+      github_repository:
+        description: The name of the repository which dispatched this workflow
+        required: true
+      github_sha:
+        description: The sha on the repository which dispatched this workflow where the check is
+        required: true     
+```
+
+In the case of the sending workflow example above, the additional inputs might look like this: 
+
+```yaml
+      variable:
+        description: A random string
+        required: true
+      my_cool_num:
+        description: an integer, represented as a string
+```
+
+### Operation
+
+Upon execution, the workflow _should_ update the provided check (via its `check_id`) with a status of `in-progress` to indicate status back to the original repository.  Upon completion, the workflow _must_ update the provided check (via its `check_id`) with a status of `completed` (which is performed implicitly if a `conclusion` is given, which represents the successs/failure of the receiving workflow).
+
+The receiving workflow _may_ create its own checks, recorded against the `github_repository` and `github_sha` provided as inputs to the workflow.
+
 
 # Releasing
 
