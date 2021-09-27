@@ -61,7 +61,7 @@ This example calls a remote workflow (`.github/workflows/my-workflow.yml` in the
         "variable": "foo_bar",
         "my_cool_num": "2"
       }
-      
+  
   env:
     # Optional, can be used to inform the action which installation of the given app_id and private_key
     # to use. If not provided, the action will assume only one installation exists and use the first one
@@ -116,7 +116,6 @@ The receiving workflow _may_ create its own checks, recorded against the `github
 # Releasing
 
 To generate a new release of this action, simply update the version tag on the image designation at the end of the [action metadata file](./action.yml). The github workflow will automatically publish a new image and create a release upon merging to main.
-
 
 # License
 
