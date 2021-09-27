@@ -7,18 +7,12 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.parse-version.outputs.version }}
+      version: ${{ steps.should-release.outputs.version }}
+      new-version: ${{ steps.should-release.outputs.new-version }}
     steps:
 
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Parse Version From action.yml
-        id: parse-version
-        run: echo "::set-output name=version::$(cat action.yml | tail -1 | cut -d ':' -f4)"
-
-      - name: Ensure Version Available
-        run: .github/workflow-scripts/check-version-available.sh ${{ steps.parse-version.outputs.version }}
 
       - name: Create Lowercase Image Name
         run: echo IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
@@ -35,19 +29,26 @@ jobs:
       - name: Unit Test
         run: docker run --rm ${{ env.IMAGE_NAME }}/unit-tester
 
+      - name: Parse Version From action.yml
+        id: parse-version
+        run: echo "::set-output name=version::$(cat action.yml | tail -1 | cut -d ':' -f4)"
+
+      - name: Determine if a new release is needed
+        uses: DrizlyInc/version-check-action@v0.3.0
+        id: should-release
+        with:
+          version: ${{ steps.parse-version.outputs.version }}
+          username: ${{ github.actor }}
+          token: ${{ github.token }}
+
   release:
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' && needs.validate.outputs.new-version == 'true' }}
     needs: validate
     runs-on: ubuntu-latest
     steps:
 
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ needs.validate.outputs.version }}
 
       - name: Build and Publish Image
         uses: matootie/github-docker@v3.1.0
@@ -58,3 +59,8 @@ jobs:
             latest
             ${{ needs.validate.outputs.version }}
             ${{ github.sha }}
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.validate.outputs.version }}

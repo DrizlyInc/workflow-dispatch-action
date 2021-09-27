@@ -1,4 +1,4 @@
-module github.com/DrizlyInc/dispatch-sender/distilleryx-action-docker/m/v2
+module github.com/DrizlyInc/workflow-dispatch-action/action/m/v2
 
 go 1.16
 

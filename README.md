@@ -28,8 +28,6 @@ This example calls a remote workflow (`.github/workflows/my-workflow.yml` in the
 
     # App ID for a GitHub app with write permissions to the dispatching repository
     # and target repository (for triggering workflows and writing creating checks)
-    # NOTE: This action assumes the given GitHub app only has a single installation
-    # and that installation will provide the required permissions
     app_id: ${{ secrets.MY_APP_ID }}
 
     # Private key for the GitHub app id provided
@@ -45,13 +43,13 @@ This example calls a remote workflow (`.github/workflows/my-workflow.yml` in the
     # the target_repository responding to the workflow_dispatch event
     workflow_filename: my-workflow
 
-    # If true, this action will wait until the check it creates is updated
+    # If false, this action will not wait until the check it creates is updated
     # to a completed status before exiting
-    wait_for_check: true
+    wait_for_check: false
 
     # Number of seconds to wait for the check before timing out (ignored if wait_for_check is false).
     # Inlcudes setup time to pull actions, etc
-    wait_timeout_seconds: 60
+    wait_timeout_seconds: 120
 
     # Inputs to pass to the workflow, must be a JSON encoded string ex. '{ "myinput":"myvalue" }'
     # Three additional fields are automatically added to the inputs prior to dispatching:
@@ -63,6 +61,13 @@ This example calls a remote workflow (`.github/workflows/my-workflow.yml` in the
         "variable": "foo_bar",
         "my_cool_num": "2"
       }
+      
+  env:
+    # Optional, can be used to inform the action which installation of the given app_id and private_key
+    # to use. If not provided, the action will assume only one installation exists and use the first one
+    # it finds (this should be the case in most circumstances).
+    APP_INSTALLATION_ID: 18419284
+
 ```
 
 ## From the Receiving Workflow
@@ -106,6 +111,11 @@ In the case of the sending workflow example above, the additional inputs might l
 Upon execution, the workflow _should_ update the provided check (via its `check_id`) with a status of `in-progress` to indicate status back to the original repository.  Upon completion, the workflow _must_ update the provided check (via its `check_id`) with a status of `completed` (which is performed implicitly if a `conclusion` is given, which represents the successs/failure of the receiving workflow).
 
 The receiving workflow _may_ create its own checks, recorded against the `github_repository` and `github_sha` provided as inputs to the workflow.
+
+
+# Releasing
+
+To generate a new release of this action, simply update the version tag on the image designation at the end of the [action metadata file](./action.yml). The github workflow will automatically publish a new image and create a release upon merging to main.
 
 
 # License

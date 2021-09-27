@@ -10,6 +10,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/google/go-github/v37/github"
+	"github.com/sethvargo/go-githubactions"
 )
 
 type inputs struct {
@@ -21,6 +24,7 @@ type inputs struct {
 	workflowFilename   string
 	waitForCheck       bool
 	waitTimeoutSeconds int64
+	installationId     int64
 	workflowInputs     map[string]interface{}
 }
 
@@ -33,6 +37,15 @@ func parseInputs() (inputs, error) {
 	appID, err := strconv.ParseInt(appIDString, 10, 64)
 	if err != nil {
 		return inputs{}, errors.New("input 'app_id' must be an integer")
+	}
+
+	installationId := int64(-1)
+	installationIdString, ok := os.LookupEnv("APP_INSTALLATION_ID")
+	if ok {
+		installationId, err = strconv.ParseInt(installationIdString, 10, 64)
+		if err != nil {
+			return inputs{}, errors.New("APP_INSTALLATION_ID must be an integer")
+		}
 	}
 
 	privateKeyString, ok := os.LookupEnv("INPUT_PRIVATE_KEY")
@@ -107,5 +120,22 @@ func parseInputs() (inputs, error) {
 		waitForCheck:       waitForCheck,
 		waitTimeoutSeconds: waitTimeoutSeconds,
 		workflowInputs:     workflowInputs,
+		installationId:     installationId,
 	}, nil
+}
+
+// addDefaultWorkflowInputs adds a standard set of variables to the inputs
+// which will be set as part of the workflow_dispatch request. These are given
+// in addition to those specified as input by the user
+func addDefaultWorkflowInputs(inputs *inputs, githubVars githubVars, checkRun *github.CheckRun) {
+	// Add default inputs to those provided by the user
+	inputs.workflowInputs["github_repository"] = githubVars.repository
+	inputs.workflowInputs["github_sha"] = githubVars.sha
+	inputs.workflowInputs["check_id"] = fmt.Sprint(*checkRun.ID)
+
+	rawInputs, err := json.Marshal(inputs.workflowInputs)
+	if err != nil {
+		githubactions.Fatalf("Error unmarshaling workflow_inputs: %v", err.Error())
+	}
+	githubactions.Infof("Complete workflow inputs: %v\n", string(rawInputs))
 }
