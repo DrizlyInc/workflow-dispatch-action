@@ -61,7 +61,7 @@ This example calls a remote workflow (`.github/workflows/my-workflow.yml` in the
         "variable": "foo_bar",
         "my_cool_num": "2"
       }
-  
+
   env:
     # Optional, can be used to inform the action which installation of the given app_id and private_key
     # to use. If not provided, the action will assume only one installation exists and use the first one
